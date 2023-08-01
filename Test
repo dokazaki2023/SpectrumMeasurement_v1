@@ -1,0 +1,34 @@
+#%%
+import time
+import DK480_control
+
+
+WAIT_TIME = 0.1
+WL_start = 0
+WL_end = 5000
+span = WL_end - WL_start
+step = 5
+SampleN = int(span/step)
+Flag_connection = True
+
+
+inst_DK = DK480_control.Connect()
+DK = DK480_control.DK480(inst_DK)
+# DK.GratingSelect(3)
+# DK.SlitAdjust(200)
+DK.GoTo(WL_start)
+# DK.Test()
+
+# %%
+import LI5640_class
+
+inst_LI = LI5640_class.Connect('GPIB0::2::INSTR')
+LIA1 = LI5640_class.Lockin(inst_LI)
+LIA1.Initialize()
+LIA1.Prepare_R()
+LIA1.Trigger()
+data = LIA1.Get_R()
+print(data)
+print(int(inst_LI.query("OPER?")))
+print(int(inst_LI.query("OPER?")))
+# %%
