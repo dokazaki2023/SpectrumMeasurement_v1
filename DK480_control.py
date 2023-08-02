@@ -165,21 +165,24 @@ class DK480:
         self.ser.write(Command.encode())
         self.IsSend(Command)
         self.ser.write(Command_WL)
-        self.IsFinished()
+        # self.IsFinished()
         self.ser.close()
         return
 
     def IsSend(self, Command):
-        while True:
+        global Flag_Finished
+        Flag_Finished = True
+        while Flag_Finished:
             # time.sleep(REFLESH_SERIAL_READ)
             result = self.ser.readline()
-            # print(result)
+            print('Read')
             result_int = binary_to_string_UTF(result)
             # print(result_int)
             Command_int = ord(Command)
-            time.sleep(2)
-            print(result_int)
+            # time.sleep(2)
             if Command_int == result_int:
+                print('Send')
+                Flag_Finished = False
                 break
 
     def IsFinished(self):
@@ -189,27 +192,57 @@ class DK480:
         while  Flag_Finished:
             # To DK240/480: <27> ECHO
             Command = chr(27)
-            time.sleep(2)
+            # time.sleep(2)
             self.ser.write(Command.encode())
             # time.sleep(REFLESH_SERIAL_READ)
             result = self.ser.readline()
-            print(result)
+            print('Echo')
             result_int = binary_to_string_ShiftJis(result)
-            print(result_int)
+            # print(result_int)
             
             if 24 == result_int:
-                print(result_int)
+                # print(result_int)
                 print('Finished')
                 Flag_Finished = False
                 break
             
             if 27 == result_int:
-                print(result_int)
+                # print(result_int)
                 print('Finished')
                 Flag_Finished = False
                 break
         return Flag_Finished
-    
+
+    def PreCheck(self):
+        global Flag_Finished
+        Flag_Finished = True
+        self.ser.open()
+        while  Flag_Finished:
+            # To DK240/480: <27> ECHO
+            Command = chr(27)
+            # time.sleep(2)
+            self.ser.write(Command.encode())
+            # time.sleep(REFLESH_SERIAL_READ)
+            result = self.ser.readline()
+            # print(result)
+            result_int = binary_to_string_ShiftJis(result)
+            # print(result_int)
+            
+            if 24 == result_int:
+                # print(result_int)
+                print('Finished')
+                Flag_Finished = False
+                break
+            
+            if 27 == result_int:
+                # print(result_int)
+                print('Finished')
+                Flag_Finished = False
+                break
+            
+        self.ser.close()
+        return Flag_Finished
+
     def IsFinished_Slit(self, SlitWidth):
         global Flag_Finished
         Flag_Finished = True
@@ -217,7 +250,7 @@ class DK480:
         while  Flag_Finished:
             # To DK240/480: <27> ECHO
             Command = chr(30)
-            time.sleep(2)
+            # time.sleep(2)
             self.ser.write(Command.encode())
             # time.sleep(REFLESH_SERIAL_READ)
             result = self.ser.readline()
@@ -226,7 +259,7 @@ class DK480:
             # print(result_int)
             
             if 'x18' in str(result):
-                print(result)
+                # print(result)
                 print('Finished')
                 Flag_Finished = False
                 break

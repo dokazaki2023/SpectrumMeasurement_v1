@@ -5,7 +5,7 @@ Created on Thu Apr 28 14:00:25 2022
 
 @author: okazakidaiki
 """
-
+#%%
 from PyQt5.QtWidgets import QButtonGroup,QFileDialog,QMainWindow,QApplication
 from PyQt5.QtCore import QObject, QRunnable, pyqtSignal, Qt, QThreadPool, pyqtSlot
 from PyQt5 import uic
@@ -30,9 +30,10 @@ class MainWindow(QMainWindow):
         self.x = {}
         self.y = {}
         self.lines = {}
+        self.lines2 = {}
         
         ## Default ##
-        dlg1.LineEdit_Folders.setText("C:\\Users\\owner\\Desktop\\")
+        dlg1.LineEdit_Folders.setText("C:\\Users\\okazaki\\Desktop\\実験データ\\")
         dlg1.LineEdit_Data_Number.setText('0')
         dlg1.LineEdit_Entrance.setText('1000')
         dlg1.LineEdit_Resolution_Wavenumber.setText('0.50')
@@ -119,7 +120,7 @@ class MainWindow(QMainWindow):
     
     def btnstate(self,b):
         global GratingID, Groove
-        DK.IsFinished()  
+        DK.PreCheck()  
         if b.text() == "1200 L/mm, 750 nm Blaze, 480-1500 nm":
             if  b.isChecked() == True:          
                 GratingID = 1
@@ -148,6 +149,7 @@ class MainWindow(QMainWindow):
         return GratingID, Groove
     
     def ChangeSlit(self):
+        DK.PreCheck()
         SW_Entrance = float(dlg1.LineEdit_Entrance.text())
         DK.SlitAdjust(SW_Entrance)
         dlg1.textEdit.append('Entrance slit is set to ' + str(SW_Entrance) + ' um') # 文字を表示する
@@ -191,6 +193,7 @@ class MainWindow(QMainWindow):
         
     def Go(self):
         global WL_Target
+        DK.PreCheck()
         WL_Target = float(dlg1.LineEdit_Target_WL.text())
         DK.GoTo(WL_Target)
         print('Center wavelength is set to ' + str(np.round(WL_Target,2)) + ' nm')
@@ -200,10 +203,9 @@ class MainWindow(QMainWindow):
 ########################################################
 ########################################################
     def LockIn(self,state):
-        global LIA1
+        global LIA1, inst_LI
         if state == Qt.Checked:
-            import LI5640_control # visaの取得
-            global LI
+            import LI5640_control # visaの取
             inst_LI = LI5640_control.Connect('GPIB0::2::INSTR')
             LIA1 = LI5640_control.Lockin(inst_LI)
             dlg1.textEdit.append(str(datetime.datetime.now()) + 'Lock-In amplifier is connected') # 文字を表示する
@@ -212,79 +214,79 @@ class MainWindow(QMainWindow):
         
     def DynamicReserve(self,text): 
         if text == 'LOW':
-            LIA1.write("DRSV 2") # ダイナミックリザーブ 低 (noisy な時は高く)
+            inst_LI.write("DRSV 2") # ダイナミックリザーブ 低 (noisy な時は高く)
         if text == 'MIDDLE':
-            LIA1.write("DRSV 1") 
+            inst_LI.write("DRSV 1") 
         if text == 'HIGH':
-            LIA1.write("DRSV 0") 
+            inst_LI.write("DRSV 0") 
         print('Dynamic Reserve : ' + text +' is selected')
         dlg1.textEdit.append(str(datetime.datetime.now()) + 'Dynamic Reserve : ' + text + ' is selected') # 文字を表示する
         dlg1.textEdit.show()  
 
     def Integration(self,text): 
         if text == '1 ms':
-            LIA1.write("TCON 4") # time constant
+            inst_LI.write("TCON 4") # time constant
         if text == '3 ms':
-            LIA1.write("TCON 5")
+            inst_LI.write("TCON 5")
         if text == '10 ms':
-            LIA1.write("TCON 6")
+            inst_LI.write("TCON 6")
         if text == '30 ms':
-            LIA1.write("TCON 7")
+            inst_LI.write("TCON 7")
         if text == '100 ms':
-            LIA1.write("TCON 8")
+            inst_LI.write("TCON 8")
         if text == '300 ms':
-            LIA1.write("TCON 9")
+            inst_LI.write("TCON 9")
         if text == '1000 ms':
-            LIA1.write("TCON 10")
+            inst_LI.write("TCON 10")
         print('Time constant : ' + text +' is selected')
         dlg1.textEdit.append(str(datetime.datetime.now()) + 'Time constant : ' + text + ' is selected') # 文字を表示する
         dlg1.textEdit.show()  
 
     def Sensitivity(self,text): 
         if text == '1 V':
-            LIA1.write("VSEN 26")
+            inst_LI.write("VSEN 26")
         if text == '500 mV':
-            LIA1.write("VSEN 25")
+            inst_LI.write("VSEN 25")
         if text == '200 mV':
-            LIA1.write("VSEN 24")
+            inst_LI.write("VSEN 24")
         if text == '100 mV':
-            LIA1.write("VSEN 23")
+            inst_LI.write("VSEN 23")
         if text == '50 mV':
-            LIA1.write("VSEN 22")
+            inst_LI.write("VSEN 22")
         if text == '20 mV':
-            LIA1.write("VSEN 21")
+            inst_LI.write("VSEN 21")
         if text == '10 mV':
-            LIA1.write("VSEN 20")
+            inst_LI.write("VSEN 20")
         if text == '5 mV':
-            LIA1.write("VSEN 19")
+            inst_LI.write("VSEN 19")
         if text == '2 mV':
-            LIA1.write("VSEN 18")
+            inst_LI.write("VSEN 18")
         if text == '1 mV':
-            LIA1.write("VSEN 17")
+            inst_LI.write("VSEN 17")
         if text == '500 uV':
-            LIA1.write("VSEN 16")
+            inst_LI.write("VSEN 16")
         if text == '200 uV':
-            LIA1.write("VSEN 15")
+            inst_LI.write("VSEN 15")
         if text == '100 uV':
-            LIA1.write("VSEN 14")
+            inst_LI.write("VSEN 14")
         if text == '50 uV':
-            LIA1.write("VSEN 13")
+            inst_LI.write("VSEN 13")
         if text == '20 uV':
-            LIA1.write("VSEN 12")
+            inst_LI.write("VSEN 12")
         if text == '10 uV':
-            LIA1.write("VSEN 11")
+            inst_LI.write("VSEN 11")
         if text == '5 uV':
-            LIA1.write("VSEN 10")
+            inst_LI.write("VSEN 10")
         if text == '2 uV':
-            LIA1.write("VSEN 9")
+            inst_LI.write("VSEN 9")
         if text == '1 uV':
-            LIA1.write("VSEN 8")
+            inst_LI.write("VSEN 8")
         if text == '500 nV':
-            LIA1.write("VSEN 7")
+            inst_LI.write("VSEN 7")
         if text == '200 nV':
-            LIA1.write("VSEN 6")
+            inst_LI.write("VSEN 6")
         if text == '100 nV':
-            LIA1.write("VSEN 5")
+            inst_LI.write("VSEN 5")
         print('Sensitivity : ' + text +' is selected')
         dlg1.textEdit.append(str(datetime.datetime.now()) + 'Sensitivity : ' + text + ' is selected') # 文字を表示する
         dlg1.textEdit.show()       
@@ -305,6 +307,7 @@ class MainWindow(QMainWindow):
     def execute(self):
         dlg1.graphicsView1.clear()
         dlg1.graphicsView2.clear()
+        DK.PreCheck()
         worker = Worker()
         worker.signals.data.connect(self.receive_data)
         self.threadpool.start(worker) # Execute
@@ -315,12 +318,13 @@ class MainWindow(QMainWindow):
             self.x[worker_id] = [x]
             self.y[worker_id] = [y]
             self.lines[worker_id] = dlg1.graphicsView1.plot(self.x[worker_id],self.y[worker_id])
-            
-            dlg1.graphicsView2.plot(self.x[worker_id],np.abs(self.y[worker_id]))
+            self.lines2[worker_id]= dlg1.graphicsView2.plot(self.x[worker_id],np.abs(self.y[worker_id]))
             return
         self.x[worker_id].append(x) # Update existing plot/data
         self.y[worker_id].append(y)
         self.lines[worker_id].setData(self.x[worker_id], self.y[worker_id])
+        self.lines2[worker_id].setData(self.x[worker_id], np.abs(self.y[worker_id]))
+        
         
 
 
@@ -335,28 +339,35 @@ class Worker(QRunnable):
         
     @pyqtSlot()
     def run(self):
-        global Wavelength,Spectrum,times,curve,WL,i
+        global Wavelength,Spectrum,times,WL
+        
+        BG = 0
+        
         WL_Start = float(dlg1.LineEdit_Start_WL.text())
         WL_Stop = float(dlg1.LineEdit_Stop_WL.text())
         WL_step = float(dlg1.LineEdit_Step_WL.text())
-        Sampling_Number = float(dlg1.LineEdit_Sampling_Number.text())
-        Sampling_Rate = int(1e3*float(dlg1.LineEdit_Sampling_Rate.text()))     
+        # Sampling_Number = float(dlg1.LineEdit_Sampling_Number.text())
+        # Sampling_Rate = int(1e3*float(dlg1.LineEdit_Sampling_Rate.text()))     
         
         WL = WL_Start
         Wavelength = WL_Start
         Spectrum = 0
-
+        LIA1.Prepare_R()
+        LIA1.Trigger()
         while WL <= WL_Stop:
+            print(WL)
+            
+            DK.PreCheck()
             DK.GoTo(WL)
-            LIA1.Prepare_R()
-            LIA1.Trigger()
+
             data = LIA1.Get_R()
-            Data_Mean = np.round(np.mean(data)-BG,5)*1e3 
+            Data_Mean = np.round(np.mean(data)-BG,5)
             self.signals.data.emit((self.worker_id, WL, Data_Mean))  
             
             WL = WL + WL_step
             Wavelength = np.r_[WL, Wavelength]
             Spectrum = np.r_[Data_Mean, Spectrum]
+            
             
         # ## save datas
         dammy = np.zeros(len(Wavelength))
@@ -416,3 +427,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
     app.exec_()
+# %%
