@@ -1,0 +1,770 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MS5204i_GUI</class>
+ <widget class="QDialog" name="MS5204i_GUI">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1171</width>
+    <height>956</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <widget class="QPushButton" name="Button_Close">
+   <property name="geometry">
+    <rect>
+     <x>310</x>
+     <y>70</y>
+     <width>113</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Close</string>
+   </property>
+   <property name="autoDefault">
+    <bool>false</bool>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="LineEdit_Data_Number">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>30</y>
+     <width>113</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="LineEdit_Folders">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>80</y>
+     <width>261</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QTextEdit" name="textEdit">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>590</y>
+     <width>411</width>
+     <height>351</height>
+    </rect>
+   </property>
+   <property name="readOnly">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QWidget" name="verticalLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>130</y>
+     <width>261</width>
+     <height>121</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QRadioButton" name="radioButton1">
+      <property name="text">
+       <string>1200 L/mm, 750 nm Blaze, 480-1500 nm</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QRadioButton" name="radioButton2">
+      <property name="text">
+       <string>600 L/mm, 1600 nm Blaze, 950-3000 nm</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QRadioButton" name="radioButton3">
+      <property name="text">
+       <string>300 L/mm, 3000 nm Blaze, 1800-6000 nm</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QLabel" name="Label_Folders">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>60</y>
+     <width>60</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Folders</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Data_Number">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>10</y>
+     <width>91</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Data Number</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Gratings">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>110</y>
+     <width>60</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Gratings</string>
+   </property>
+  </widget>
+  <widget class="QWidget" name="gridLayoutWidget_5">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>490</y>
+     <width>281</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="1">
+     <widget class="QPushButton" name="Button_Measure">
+      <property name="text">
+       <string>Measure</string>
+      </property>
+      <property name="autoDefault">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QPushButton" name="Button_Go">
+      <property name="text">
+       <string>Go</string>
+      </property>
+      <property name="autoDefault">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="verticalLayoutWidget_2">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>270</y>
+     <width>421</width>
+     <height>221</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout_2">
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <item>
+       <widget class="QLineEdit" name="LineEdit_Resolution_Wavenumber">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="LineEdit_Resolution_Frequency">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="LineEdit_Resolution_Wavelength">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QLineEdit" name="LineEdit_Target_WL"/>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="LineEdit_Start_WL"/>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="LineEdit_Stop_WL"/>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_6">
+      <item>
+       <widget class="QLineEdit" name="LineEdit_Target_WN">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="LineEdit_Start_WN">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="LineEdit_Stop_WN">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item>
+       <widget class="QLineEdit" name="LineEdit_Step_WL"/>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="LineEdit_Sampling_Number"/>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="LineEdit_Sampling_Rate"/>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="gridLayoutWidget_6">
+   <property name="geometry">
+    <rect>
+     <x>460</x>
+     <y>10</y>
+     <width>691</width>
+     <height>941</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_2">
+    <item row="2" column="0">
+     <widget class="PlotWidget" name="graphicsView3"/>
+    </item>
+    <item row="2" column="1">
+     <widget class="PlotWidget" name="graphicsView4"/>
+    </item>
+    <item row="1" column="0" colspan="2">
+     <widget class="PlotWidget" name="graphicsView2"/>
+    </item>
+    <item row="0" column="0" colspan="2">
+     <widget class="PlotWidget" name="graphicsView1"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QLabel" name="Label_Entrance">
+   <property name="geometry">
+    <rect>
+     <x>340</x>
+     <y>170</y>
+     <width>101</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Entrance (um)</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Target_WL">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>320</y>
+     <width>101</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Target WL (nm)</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Start_WL">
+   <property name="geometry">
+    <rect>
+     <x>200</x>
+     <y>320</y>
+     <width>101</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Start WL (nm)</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Stop_WL">
+   <property name="geometry">
+    <rect>
+     <x>350</x>
+     <y>320</y>
+     <width>91</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Stop WL (nm)</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_WL_step">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>430</y>
+     <width>91</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>WL step (nm)</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Sampling_Number">
+   <property name="geometry">
+    <rect>
+     <x>190</x>
+     <y>430</y>
+     <width>111</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Sampling Number</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Sampling_Rate">
+   <property name="geometry">
+    <rect>
+     <x>330</x>
+     <y>430</y>
+     <width>141</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Sampling Rate (kS/s)</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Resolution_Wavenumber">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>260</y>
+     <width>121</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Resolution (cm^-1)</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Resolution_Wavelength">
+   <property name="geometry">
+    <rect>
+     <x>340</x>
+     <y>260</y>
+     <width>101</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Resolution (nm)</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Resolution_Frequency">
+   <property name="geometry">
+    <rect>
+     <x>190</x>
+     <y>260</y>
+     <width>121</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Resolution (GHz)</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Target_WN">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>380</y>
+     <width>111</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Target WN (cm-1)</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Start_WN">
+   <property name="geometry">
+    <rect>
+     <x>190</x>
+     <y>380</y>
+     <width>101</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Start WN (cm-1)</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Stop_WN">
+   <property name="geometry">
+    <rect>
+     <x>340</x>
+     <y>380</y>
+     <width>101</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Stop WL (cm-1)</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Button_Folder">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>20</y>
+     <width>113</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Folder</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="CheckBox_LockIn">
+   <property name="geometry">
+    <rect>
+     <x>350</x>
+     <y>500</y>
+     <width>81</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Lock In</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_DR">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>530</y>
+     <width>101</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Dynamic Reserve</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Integration">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>530</y>
+     <width>101</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Integration (ms)</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_DR_4">
+   <property name="geometry">
+    <rect>
+     <x>330</x>
+     <y>530</y>
+     <width>101</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Sensitivity (mV) </string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="ComboBox_IntegrationTime">
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>550</y>
+     <width>111</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <item>
+    <property name="text">
+     <string>1 ms</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>3 ms</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>10 ms</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>30 ms</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>100 ms</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>300 ms</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>1000 ms</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QComboBox" name="ComboBox_Sensitivity">
+   <property name="geometry">
+    <rect>
+     <x>310</x>
+     <y>550</y>
+     <width>111</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <item>
+    <property name="text">
+     <string>1 V</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>500 mV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>200 mV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>100 mV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>50 mV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>20 mV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>10 mV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>5 mV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>2 mV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>1 mV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>500 uV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>200 uV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>100 uV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>50 uV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>20 uV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>10 uV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>5 uV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>2 uV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>1 uV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>500 nV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>200 nV</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>100 nV</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QComboBox" name="ComboBox_DR">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>550</y>
+     <width>111</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <item>
+    <property name="text">
+     <string>LOW</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>MIDDLE</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>HIGH</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QPushButton" name="Button_Change_Slit">
+   <property name="geometry">
+    <rect>
+     <x>330</x>
+     <y>140</y>
+     <width>80</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="text">
+    <string>Change Slit</string>
+   </property>
+   <property name="autoDefault">
+    <bool>false</bool>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="LineEdit_Entrance">
+   <property name="geometry">
+    <rect>
+     <x>320</x>
+     <y>190</y>
+     <width>108</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>6</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header location="global">pyqtgraph</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>Button_Close</sender>
+   <signal>clicked()</signal>
+   <receiver>MS5204i_GUI</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>151</x>
+     <y>54</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>581</x>
+     <y>-16</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

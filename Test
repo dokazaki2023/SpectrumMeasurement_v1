@@ -20,10 +20,10 @@ DK.GoTo(WL_start)
 # DK.Test()
 
 # %%
-import LI5640_class
+import LI5640_control
 
-inst_LI = LI5640_class.Connect('GPIB0::2::INSTR')
-LIA1 = LI5640_class.Lockin(inst_LI)
+inst_LI = LI5640_control.Connect('GPIB0::2::INSTR')
+LIA1 = LI5640_control.Lockin(inst_LI)
 LIA1.Initialize()
 LIA1.Prepare_R()
 LIA1.Trigger()
