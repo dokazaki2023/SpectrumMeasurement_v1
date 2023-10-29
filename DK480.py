@@ -35,17 +35,17 @@ class MainWindow(QMainWindow):
         ## Default ##
         dlg1.LineEdit_Folders.setText("C:\\Users\\okazaki\\Desktop\\実験データ\\")
         dlg1.LineEdit_Data_Number.setText('0')
-        dlg1.LineEdit_Entrance.setText('1000')
+        dlg1.LineEdit_Entrance.setText('100')
         dlg1.LineEdit_Resolution_Wavenumber.setText('0.50')
         dlg1.LineEdit_Resolution_Frequency.setText('15')
         dlg1.LineEdit_Resolution_Wavelength.setText('0.26')
-        dlg1.LineEdit_Target_WL.setText('2370.52')
-        dlg1.LineEdit_Start_WL.setText('2000')
-        dlg1.LineEdit_Stop_WL.setText('2500')
+        dlg1.LineEdit_Target_WL.setText('4500')
+        dlg1.LineEdit_Start_WL.setText('4500')
+        dlg1.LineEdit_Stop_WL.setText('5000')
         dlg1.LineEdit_Target_WN.setText('4444.44')
         dlg1.LineEdit_Start_WN.setText('5000')
         dlg1.LineEdit_Stop_WN.setText('4000')
-        dlg1.LineEdit_Step_WL.setText('5')
+        dlg1.LineEdit_Step_WL.setText('4')
         dlg1.LineEdit_Sampling_Rate.setText('Not Ready')
         dlg1.LineEdit_Sampling_Number.setText('Not Ready')
 
@@ -360,10 +360,13 @@ class Worker(QRunnable):
             DK.PreCheck()
             DK.GoTo(WL)
 
+            # LIA1.Prepare_R()
+            # LIA1.Trigger()
             data = LIA1.Get_R()
-            Data_Mean = np.round(np.mean(data)-BG,5)
+            print(data)
+            Data_Mean = np.average(data[0])
+            print(Data_Mean)
             self.signals.data.emit((self.worker_id, WL, Data_Mean))  
-            
             WL = WL + WL_step
             Wavelength = np.r_[WL, Wavelength]
             Spectrum = np.r_[Data_Mean, Spectrum]

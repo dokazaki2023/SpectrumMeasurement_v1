@@ -32,3 +32,6 @@ print(data)
 print(int(inst_LI.query("OPER?")))
 print(int(inst_LI.query("OPER?")))
 # %%
+data = LIA1.Get_R()
+print(data)
+# %%
