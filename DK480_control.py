@@ -68,7 +68,8 @@ class DK480:
         self.ser = ser
         self.flag_finished = False
         self.response_received = False
-        
+        self.flag_timeout = False
+
     def WavelengthConvert(self, Wavelength):
         Wavelength = int(Wavelength*100)
         Wavelength16 = hex(Wavelength)
@@ -113,7 +114,7 @@ class DK480:
         Low = int(Low, 16)
         return  High, Low
 
-    def GratingSelect(self, GratingID):        #? To DK240/480: <26> GRTSEL
+    def GratingSelect(self, GratingID,):        #? To DK240/480: <26> GRTSEL
         # Ensure the serial port is open
         if not self.ser.isOpen():
             self.ser.open()
@@ -125,7 +126,7 @@ class DK480:
         is_send_thread = threading.Thread(target=self.IsSend, args=(Command,))  # chr(26) is the command to be sent
         is_send_thread.start()
         # Allow a very short delay to ensure the thread is listening # Adjust this value as needed; it should be as short as possible
-        time.sleep(0.1)  
+        time.sleep(0.1)
         # Send the command
         self.ser.write(Command.encode('utf-8'))
         # Wait for the IsSend thread to finish
@@ -139,11 +140,11 @@ class DK480:
         self.flag_finished = True
         self.response_received = False
         Command = chr(GratingID)
-        is_send_thread = threading.Thread(target=self.IsFinished, args=())  # chr(26) is the command to be sent
-        is_send_thread.start()
-        time.sleep(0.1)  
+        is_finished_thread = threading.Thread(target=self.IsFinished, args=(150,))  # chr(26) is the command to be sent
+        is_finished_thread.start()
+        time.sleep(0.1)
         self.ser.write(Command.encode('utf-8'))
-        is_send_thread.join()
+        is_finished_thread.join()
         self.ser.close()
         return
     
@@ -174,50 +175,49 @@ class DK480:
         self.flag_finished = True
         self.response_received = False
         
-        is_send_thread = threading.Thread(target=self.IsFinished, args=())  # chr(26) is the command to be sent
-        is_send_thread.start()
-        time.sleep(0.1)  
+        is_finished_thread = threading.Thread(target=self.IsFinished, args=(20,))  # chr(26) is the command to be sent
+        is_finished_thread.start()
+        time.sleep(0.1)
         self.ser.write(Command_WL)
-        is_send_thread.join()
+        is_finished_thread.join()
         self.ser.close()
         return
 
     def IsSend(self, Command):
         start_time = time.time()  # Record the start time
-        timeout = 10  # Timeout in seconds
+        timeout = 2  # Timeout in seconds
         while self.flag_finished:
             if time.time() - start_time > timeout:
                 print("Timeout: No response received.")
+                self.flag_timeout = True
                 self.flag_finished = False  # Exit the loop after the timeout
                 break
         
             result = self.ser.readline()
             if result:
-                print('Read')
                 result_int = binary_to_string_UTF(result)
                 Command_int = ord(Command)
                 if Command_int == result_int:
                     self.response_received = True
                     self.flag_finished = False
-                    print('Send')
+                    # print('IsSend OK')
 
-    def IsFinished(self):
+    def IsFinished(self, timeout):
+        self.flag_timeout = False
         start_time = time.time()  # Record the start time
-        timeout = 100  # Timeout in seconds
         while self.flag_finished:
             if time.time() - start_time > timeout:
                 print("Timeout: No response received.")
+                self.flag_timeout = True
                 self.flag_finished = False  # Exit the loop after the timeout
                 break
-        
             result = self.ser.readline()
             if result:
-                print('Read')
                 result_int = binary_to_string_ShiftJis(result)
                 if 24 == result_int:
                     self.response_received = True
                     self.flag_finished = False
-                    print('Send')
+                    print('IsFinished OK')
 
     def PreCheck(self):
         #? To DK240/480: <27> ECHO # Ensure the serial port is open
@@ -267,32 +267,14 @@ class DK480:
         self.flag_finished = True
         self.response_received = False
         
-        is_send_thread = threading.Thread(target=self.IsFinished, args=())  # chr(26) is the command to be sent
-        is_send_thread.start()
+        is_finished_thread = threading.Thread(target=self.IsFinished, args=(20,))  # chr(26) is the command to be sent
+        is_finished_thread.start()
         time.sleep(0.1)  
         self.ser.write(Command_Slit)
-        is_send_thread.join()
+        is_finished_thread.join()
         self.ser.close()
         return
 
-    def IsFinished_Slit(self):
-        # start_time = time.time()  # Record the start time
-        # timeout = 100  # Timeout in seconds
-        # while self.flag_finished:
-        #     if time.time() - start_time > timeout:
-        #         print("Timeout: No response received.")
-        #         self.flag_finished = False  # Exit the loop after the timeout
-        #         break
-        
-        #     result = self.ser.readline()
-        #     if result:
-        #         print('Read')
-        #         # result_int = binary_to_string(result)
-        #         if 'x18' in str(result):
-        #             self.response_received = True
-        #             self.flag_finished = False
-        #             print('Send')
-        return
 
 if __name__ == '__main__':
     inst_DK = Connect()

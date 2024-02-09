@@ -24,8 +24,7 @@ def Connect(ResourceName):
         inst = rm.open_resource(ResourceName) # 接続機器の選択
         inst.write("*CLS")
         inst.write("*RST")
-        print(inst.query("*IDN?"))  # 通信テスト　機器の名前を聞く
-        print('に接続しました')
+        print(str(inst.query("*IDN?")) + 'に接続しました')  # 通信テスト　機器の名前を聞く
     except Exception as e:
         print('Connection error')
         print('Check USB connection, NI-488.2 etc. or restart the machine')

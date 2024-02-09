@@ -32,7 +32,7 @@ class MainWindow(QMainWindow):
         self.y = {}
         self.lines = {}
         self.lines2 = {}
-        
+
         ## Default ##
         dlg1.LineEdit_Folders.setText("C:\\Users\\okazaki\\Desktop\\実験データ\\")
         dlg1.LineEdit_Data_Number.setText('0')
@@ -76,17 +76,24 @@ class MainWindow(QMainWindow):
         dlg1.Button_Measure.clicked.connect(self.execute)
         dlg1.Button_Update.clicked.connect(self.Update)
 
-        # dlg1.graphicsView1.setBackground("#FFFFFF00")# 3 背景色を設定する(#FFFFFF00 : Transparent)
-        # fontCss = {'font-family': "Arial, Noto Sans Mono Regular", 'font-size': '24pt', 'color': 'white'}
+        font = 'Yu Gothic UI'
         p1 = dlg1.graphicsView1.plotItem
-        p1.setLabels(bottom = 'Wavelength (nm)', left='Power spectrum')
-        p1.getAxis('bottom').setPen(pg.mkPen(color='w', width=1.5))
-        p1.getAxis('left').setPen(pg.mkPen(color='w', width=1.5))
+        p1.setLabel('bottom', '<font face="' + font + '">' + 'Wavelength (nm)</font>')
+        p1.setLabel('left', '<font face="' + font + '">' + 'Power spectrum (a.u.)</font>')
+        p1.getAxis('bottom').setPen(pg.mkPen(color='w', width=1.0))
+        p1.getAxis('left').setPen(pg.mkPen(color='w', width=1.0))
+        font_obj = QtGui.QFont()
+        font_obj.setFamily(font)
+        p1.getAxis("left").tickFont = font_obj
+        p1.getAxis("bottom").tickFont = font_obj
         
         p2 = dlg1.graphicsView2.plotItem
-        p2.setLabels(bottom = 'Wavelength (nm)', left='Power spectrum')
-        p2.getAxis('bottom').setPen(pg.mkPen(color='w', width=1.5))
-        p2.getAxis('left').setPen(pg.mkPen(color='w', width=1.5))
+        p2.setLabel('bottom', '<font face="' + font + '">' + 'Wavelength (nm)</font>')
+        p2.setLabel('left', '<font face="' + font + '">' + 'Power spectrum (a.u.)</font>')
+        p2.getAxis('bottom').setPen(pg.mkPen(color='w', width=1.0))
+        p2.getAxis('left').setPen(pg.mkPen(color='w', width=1.0))
+        p2.getAxis("left").tickFont = font_obj
+        p2.getAxis("bottom").tickFont = font_obj
         p2.setLogMode(False, True)
         dlg1.show()
         
@@ -153,21 +160,21 @@ class MainWindow(QMainWindow):
     def btnstate(self,b):
         global GratingID, Groove
         DK.PreCheck()  
-        if b.text() == "1200 L/mm, 750 nm Blaze, 480-1500 nm":
+        if b.text() == "1200 L/mm, 750 nm, 480-1500 nm":
             if  b.isChecked() == True:          
                 GratingID = 1
                 Groove = 1200
                 print (b.text()+" is selected")
             else:
                 print (b.text()+" is deselected")
-        if b.text() == "600 L/mm, 1600 nm Blaze, 950-3000 nm":
+        if b.text() == "600 L/mm, 1600 nm, 950-3000 nm":
             if  b.isChecked() == True:
                 GratingID = 2
                 Groove = 600
                 print (b.text()+" is selected")
             else:
                 print (b.text()+" is deselected")
-        if b.text() == "300 L/mm, 3000 nm Blaze, 1800-6000 nm":
+        if b.text() == "300 L/mm, 3000 nm, 1800-6000 nm":
             if  b.isChecked() == True:
                 GratingID = 3
                 Groove = 300
@@ -175,26 +182,46 @@ class MainWindow(QMainWindow):
             else:
                 print (b.text()+" is deselected")
         DK.GratingSelect(GratingID)
-        dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Grating is successfully changed to the Grating ' + str(GratingID)) # 文字を表示する
-        dlg1.textEdit.show()  
-        print('Grating is successfully changed')   
+
+        if DK.flag_timeout:
+            redText = "<span style=\" color:#ff0000;\" >"
+            redText += str(datetime.datetime.now()) + ' : Timeout occurs ! '
+            redText += "</span>"
+            dlg1.textEdit.append(redText)
+        else:
+            dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Grating is successfully changed to the Grating ' + str(GratingID)) # 文字を表示する
+            dlg1.textEdit.show()
+            
         return GratingID, Groove
-    
+
     def ChangeSlit(self):
         DK.PreCheck()
         SW_Entrance = float(dlg1.LineEdit_Entrance.text())
         DK.SlitAdjust(SW_Entrance)
-        dlg1.textEdit.append('Entrance slit is set to ' + str(SW_Entrance) + ' um') # 文字を表示する
-        dlg1.textEdit.show()
+        if DK.flag_timeout:
+            redText = "<span style=\" color:#ff0000;\" >"
+            redText += str(datetime.datetime.now()) + ' : Timeout occurs ! '
+            redText += "</span>"
+            dlg1.textEdit.append(redText)
+        else:
+            dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Entrance slit is set to ' + str(SW_Entrance) + ' um') # 文字を表示する
+            dlg1.textEdit.show()
         
     def Go(self):
         global WL_Target
         DK.PreCheck()
         WL_Target = float(dlg1.LineEdit_Target_WL.text())
         DK.GoTo(WL_Target)
-        print('Center wavelength is set to ' + str(np.round(WL_Target,2)) + ' nm')
-        dlg1.textEdit.append(str(datetime.datetime.now()) + ': Center wavelength is set to ' + str(np.round(WL_Target,2)) + ' nm') # 文字を表示する
-        dlg1.textEdit.show()
+        if DK.flag_timeout:
+            redText = "<span style=\" color:#ff0000;\" >"
+            redText += str(datetime.datetime.now()) + ' : Timeout occurs ! '
+            redText += "</span>"
+            dlg1.textEdit.append(redText)
+        else:
+            print('Center wavelength is set to ' + str(np.round(WL_Target,2)) + ' nm')
+            dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Center wavelength is set to ' + str(np.round(WL_Target,2)) + ' nm') # 文字を表示する
+            dlg1.textEdit.show()
+            
 
 ########################################################
 ########################################################
@@ -204,7 +231,7 @@ class MainWindow(QMainWindow):
             import LI5640_control # visaの取
             inst_LI = LI5640_control.Connect('GPIB0::2::INSTR')
             LIA1 = LI5640_control.Lockin(inst_LI)
-            dlg1.textEdit.append(str(datetime.datetime.now()) + 'Lock-In amplifier is connected') # 文字を表示する
+            dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Lock-In amplifier is connected') # 文字を表示する
             dlg1.textEdit.show() 
             print('Lock in measurement system is ready')
         
@@ -216,7 +243,7 @@ class MainWindow(QMainWindow):
         if text == 'HIGH':
             inst_LI.write("DRSV 0") 
         print('Dynamic Reserve : ' + text +' is selected')
-        dlg1.textEdit.append(str(datetime.datetime.now()) + 'Dynamic Reserve : ' + text + ' is selected') # 文字を表示する
+        dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Dynamic Reserve : ' + text + ' is selected') # 文字を表示する
         dlg1.textEdit.show()  
 
     def Integration(self,text): 
@@ -235,7 +262,7 @@ class MainWindow(QMainWindow):
         if text == '1000 ms':
             inst_LI.write("TCON 10")
         print('Time constant : ' + text +' is selected')
-        dlg1.textEdit.append(str(datetime.datetime.now()) + 'Time constant : ' + text + ' is selected') # 文字を表示する
+        dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Time constant : ' + text + ' is selected') # 文字を表示する
         dlg1.textEdit.show()  
 
     def Sensitivity(self,text): 
@@ -284,7 +311,7 @@ class MainWindow(QMainWindow):
         if text == '100 nV':
             inst_LI.write("VSEN 5")
         print('Sensitivity : ' + text +' is selected')
-        dlg1.textEdit.append(str(datetime.datetime.now()) + 'Sensitivity : ' + text + ' is selected') # 文字を表示する
+        dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Sensitivity : ' + text + ' is selected') # 文字を表示する
         dlg1.textEdit.show()       
 
 ########################################################
@@ -349,22 +376,14 @@ class Worker(QRunnable):
         LIA1.Prepare_R()
         LIA1.Trigger()
         while WL <= WL_Stop:
-            print(WL)
-            
             DK.PreCheck()
             DK.GoTo(WL)
-
-            # LIA1.Prepare_R()
-            # LIA1.Trigger()
             data = LIA1.Get_R()
-            print(data)
             Data_Mean = np.average(data[0])
-            print(Data_Mean)
             self.signals.data.emit((self.worker_id, WL, Data_Mean))  
             WL = WL + WL_step
             Wavelength = np.r_[WL, Wavelength]
             Spectrum = np.r_[Data_Mean, Spectrum]
-            
             
         # ## save datas
         dammy = np.zeros(len(Wavelength))
@@ -409,9 +428,15 @@ class Worker(QRunnable):
             text = str(dlg1.textEdit.toPlainText())
             with open(filename2, 'w') as f:
                 f.write(text)
+            dlg1.textEdit.append(str(datetime.datetime.now()) + ' : The datas are saved successefully.') 
             print('ファイルは正常に保存されました。')
         except:
-            print('ERROR:ファイルの保存に失敗しました。')
+            print('ファイルの保存に失敗しました。')
+            redText = "<span style=\" color:#ff0000;\" >"
+            redText += str(datetime.datetime.now()) + ' : ERROR: Data saving failed '
+            redText += "</span>"
+            dlg1.textEdit.append(redText)
+        dlg1.textEdit.show()
 
 class SubWindow(QMainWindow):
     def __init__(self):
@@ -475,13 +500,13 @@ class SubWindow(QMainWindow):
 ########################################################        
 if __name__ == "__main__":
     global Grating_ID
-    # GratingID = 3
-    # Groove = 300
-    # inst_DK = DK480_control.Connect()
-    # DK = DK480_control.DK480(inst_DK)   
+    GratingID = 3
+    Groove = 300
+    inst_DK  = DK480_control.Connect()
+    DK = DK480_control.DK480(inst_DK)
     app = QApplication(sys.argv)
     window = MainWindow()
-    subWindow = SubWindow()
+    # subWindow = SubWindow()
     app.exec_()
 
 # %%
