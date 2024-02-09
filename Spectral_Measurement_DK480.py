@@ -6,7 +6,7 @@ Created on Thu Apr 28 14:00:25 2022
 @author: okazakidaiki
 """
 #%%
-from PyQt5.QtWidgets import QButtonGroup,QFileDialog,QMainWindow,QApplication
+from PyQt5.QtWidgets import QButtonGroup,QFileDialog,QMainWindow,QApplication,QWidget
 from PyQt5.QtCore import QObject, QRunnable, pyqtSignal, Qt, QThreadPool, pyqtSlot
 from PyQt5 import uic
 import sys
@@ -16,16 +16,17 @@ import pyqtgraph as pg
 import uuid
 import datetime
 import os
+from pyqtgraph import Point
+from optics import *
 import pyqtgraph.exporters # pg.exporters を呼ぶために必要
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-      
-        global dlg1,times,Flag_MC, Flag_HITRAN
+        global dlg1,dlg2,times
         times = 0
         dlg1 = uic.loadUi("DK480.ui")  # 作成した page1.ui を読み出して, ダイアログ1を作成
-        
+        dlg2 = uic.loadUi("DK480_Raytrace.ui")
         self.threadpool = QThreadPool()
         self.x = {}
         self.y = {}
@@ -48,7 +49,6 @@ class MainWindow(QMainWindow):
         dlg1.LineEdit_Step_WL.setText('4')
         dlg1.LineEdit_Sampling_Rate.setText('Not Ready')
         dlg1.LineEdit_Sampling_Number.setText('Not Ready')
-
         
         ## Toggle Button ##
         dlg1.radioButton1.toggled.connect(lambda:self.btnstate(dlg1.radioButton1))
@@ -67,19 +67,14 @@ class MainWindow(QMainWindow):
         ## Check Box ##
         dlg1.CheckBox_LockIn.stateChanged.connect(lambda: self.LockIn(dlg1.CheckBox_LockIn.checkState()))
         
-        ## Text Box ##
-        dlg1.LineEdit_Entrance.textChanged.connect(self.Slit)
-        dlg1.LineEdit_Target_WL.textChanged.connect(self.Wavenumber)
-        dlg1.LineEdit_Start_WL.textChanged.connect(self.Wavenumber)
-        dlg1.LineEdit_Stop_WL.textChanged.connect(self.Wavenumber)
-        
         ## Push Button ##
         dlg1.Button_Close.clicked.connect(self.close_application)
+        dlg2.Button_Close.clicked.connect(self.close_application2)
         dlg1.Button_Folder.clicked.connect(self.Folder)
         dlg1.Button_Change_Slit.clicked.connect(self.ChangeSlit)
-        dlg1.Button_Change_Slit.clicked.connect(self.Slit)
         dlg1.Button_Go.clicked.connect(self.Go)
         dlg1.Button_Measure.clicked.connect(self.execute)
+        dlg1.Button_Update.clicked.connect(self.Update)
 
         # dlg1.graphicsView1.setBackground("#FFFFFF00")# 3 背景色を設定する(#FFFFFF00 : Transparent)
         # fontCss = {'font-family': "Arial, Noto Sans Mono Regular", 'font-size': '24pt', 'color': 'white'}
@@ -87,18 +82,52 @@ class MainWindow(QMainWindow):
         p1.setLabels(bottom = 'Wavelength (nm)', left='Power spectrum')
         p1.getAxis('bottom').setPen(pg.mkPen(color='w', width=1.5))
         p1.getAxis('left').setPen(pg.mkPen(color='w', width=1.5))
-        dlg1.show()  # ダイアログ1を表示
         
         p2 = dlg1.graphicsView2.plotItem
         p2.setLabels(bottom = 'Wavelength (nm)', left='Power spectrum')
         p2.getAxis('bottom').setPen(pg.mkPen(color='w', width=1.5))
         p2.getAxis('left').setPen(pg.mkPen(color='w', width=1.5))
         p2.setLogMode(False, True)
-        dlg1.show()  # ダイアログ1を表示
+        dlg1.show()
         
-    
+    def Update(self):
+        global WL_Target, WL_Start, WL_Stop 
+        c = 2.997924*10**(8)
+        Slit = float(dlg1.LineEdit_Entrance.text())
+        WL_Target = float(dlg1.LineEdit_Target_WL.text())
+        WL_Start = float(dlg1.LineEdit_Start_WL.text())
+        WL_Stop = float(dlg1.LineEdit_Stop_WL.text())
+        
+        try:
+            WN_Target = np.round(1/(WL_Target*1e-7),2)
+            WN_Start = np.round(1/(WL_Start*1e-7),2)
+            WN_Stop = np.round(1/(WL_Stop*1e-7),2)
+        except:
+            return
+        dlg1.LineEdit_Target_WN.setText(str(WN_Target))
+        dlg1.LineEdit_Start_WN.setText(str(WN_Start))
+        dlg1.LineEdit_Stop_WN.setText(str(WN_Stop))
+        
+        try:
+            Resolution_Slit = WL_Target * Slit / 1e6
+            Resolution_Grating =  WL_Target /(Groove*60)
+            Resolution_WL = np.sqrt(Resolution_Slit**2 + Resolution_Grating**2)
+            Resolution_Frequency = (c*(Resolution_WL*1e-9)/((WL_Target*1e-9)**2))
+            Resolution_WN = Resolution_Frequency / (c*1e2)
+            Resolution_WL = np.round(Resolution_WL,3)
+            Resolution_Frequency = np.round(Resolution_Frequency*1e-9,3)
+            Resolution_WN = np.round(Resolution_WN,3)
+        except:
+            return
+        dlg1.LineEdit_Resolution_Wavelength.setText(str(Resolution_WL))
+        dlg1.LineEdit_Resolution_Wavenumber.setText(str(Resolution_WN))
+        dlg1.LineEdit_Resolution_Frequency.setText(str(Resolution_Frequency))
+        dlg1.textEdit.show()
+
+    def Trace(self):
+        subWindow = SubWindow()
+        
     def keyPressEvent(self,e): # エスケープキーを押すと画面が閉じる
-        global Flag_MC
         if e.key() == Qt.Key_Escape:
             print('Turned off')
             dlg1.textEdit.append(str(datetime.datetime.now()) + ' : The Application is closed')
@@ -109,6 +138,9 @@ class MainWindow(QMainWindow):
         dlg1.textEdit.append(str(datetime.datetime.now()) + ' : The Application is closed')
         dlg1.close()    
             
+    def close_application2(self):
+        dlg2.close()  
+        
     def Folder(self):
         global file_path
         file_path = QFileDialog.getExistingDirectory()
@@ -144,8 +176,8 @@ class MainWindow(QMainWindow):
                 print (b.text()+" is deselected")
         DK.GratingSelect(GratingID)
         dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Grating is successfully changed to the Grating ' + str(GratingID)) # 文字を表示する
-        print('Grating is successfully changed') 
-        dlg1.textEdit.show()    
+        dlg1.textEdit.show()  
+        print('Grating is successfully changed')   
         return GratingID, Groove
     
     def ChangeSlit(self):
@@ -154,42 +186,6 @@ class MainWindow(QMainWindow):
         DK.SlitAdjust(SW_Entrance)
         dlg1.textEdit.append('Entrance slit is set to ' + str(SW_Entrance) + ' um') # 文字を表示する
         dlg1.textEdit.show()
-        
-    def Slit(self):
-        global WL_Target
-        Slit = float(dlg1.LineEdit_Entrance.text())
-        WL_Target = float(dlg1.LineEdit_Target_WL.text())
-        try:
-            Resolution_Slit = WL_Target * Slit / 1e6
-            Resolution_Grating =  WL_Target /(Groove*60)
-            Resolution_WL = np.sqrt(Resolution_Slit**2 + Resolution_Grating**2)
-            c = 2.997924*10**(8)
-            Resolution_Frequency = (c*(Resolution_WL*1e-9)/((WL_Target*1e-9)**2))
-            Resolution_WN = Resolution_Frequency / (c*1e2)
-            Resolution_WL = np.round(Resolution_WL,3)
-            Resolution_Frequency = np.round(Resolution_Frequency*1e-9,3)
-            Resolution_WN = np.round(Resolution_WN,3)
-        except:
-            return
-        dlg1.LineEdit_Resolution_Wavelength.setText(str(Resolution_WL))
-        dlg1.LineEdit_Resolution_Wavenumber.setText(str(Resolution_WN))
-        dlg1.LineEdit_Resolution_Frequency.setText(str(Resolution_Frequency))
-        dlg1.textEdit.show()
-    
-    def Wavenumber(self):  
-        global WL_Target
-        WL_Target = float(dlg1.LineEdit_Target_WL.text())
-        WL_Start = float(dlg1.LineEdit_Start_WL.text())
-        WL_Stop = float(dlg1.LineEdit_Stop_WL.text())
-        try:
-            WN_Target = np.round(1/(WL_Target*1e-7),2)
-            WN_Start = np.round(1/(WL_Start*1e-7),2)
-            WN_Stop = np.round(1/(WL_Stop*1e-7),2)
-        except:
-            return
-        dlg1.LineEdit_Target_WN.setText(str(WN_Target))
-        dlg1.LineEdit_Start_WN.setText(str(WN_Start))
-        dlg1.LineEdit_Stop_WN.setText(str(WN_Stop))
         
     def Go(self):
         global WL_Target
@@ -324,8 +320,6 @@ class MainWindow(QMainWindow):
         self.y[worker_id].append(y)
         self.lines[worker_id].setData(self.x[worker_id], self.y[worker_id])
         self.lines2[worker_id].setData(self.x[worker_id], np.abs(self.y[worker_id]))
-        
-        
 
 
 class WorkerSignals(QObject):
@@ -419,15 +413,75 @@ class Worker(QRunnable):
         except:
             print('ERROR:ファイルの保存に失敗しました。')
 
+class SubWindow(QMainWindow):
+    def __init__(self):
+        global dlg2
+        dlg2 = uic.loadUi("DK480_Raytrace.ui")
+        dlg2.graphicsView3.clear()
+        p3 = dlg2.graphicsView3.plotItem
+        p3.setRange(xRange = (-500, 100), yRange = (-350, 250), padding = 0)
+        dlg2.show()  # ダイアログ1を表示
+        
+        optics = []
+        allRays1 = []
+        allRays2 = []
+        allRays3 = []
+        Groove = 300
+        WL_Target = 4100
+        WL_BW_nm = 600
+        Num_color = 11
+        WL_center_um = 1e-3*WL_Target
+        WL_Blue = 1e3*WL_center_um - WL_BW_nm/2
+        WL_Red =  1e3*WL_center_um + WL_BW_nm/2
+        
+        M1 = Mirror(r1=0, pos=(-2, -315), angle=-135, d1=25, d2=25, d=6, name = 'Coupling Mirror')
+        L1 = Lens(pos=(0, -225), angle=90, dia=25, r1=100/2, r2= 0, d= 4.0, glass='CaF2', name = 'Coupling Lens')
+        M2 = Mirror(r1=0, pos=(2, -85), angle=41.8, d1=25, d2=25, d=6, name = 'Second Mirror')
+        P1 = Mirror(r1=-480*2, pos=(-450, -40), angle=180, d1=60, d2=60, d=10, name = 'Collimating Mirror')
+        G1 = Grating(Groove=Groove, pos=(0,7), angle=-38.3, d1=68, d2=68, d=10, name = 'Grating')
+        P2 = Mirror(r1=-480*2, pos=(-450, 40), angle=180, d1=60, d2=60, d=10, name = 'Focusing Mirror')
+        M3 = Mirror(r1=0, pos=(0, 79), angle=-43.2, d1=25, d2=25, d=6, name = 'Output Mirror')
+        optics.append(M1)
+        optics.append(L1)
+        optics.append(M2)
+        optics.append(P1)
+        optics.append(G1)
+        optics.append(P2)
+        optics.append(M3)
+        
+        for wl in np.linspace(WL_Blue, WL_Red, Num_color):
+            r1 = Ray(start=Point(100, -312.5), dir=(-1,0), wl=wl, WL_min=WL_Blue, WL_max=WL_Red, Laser='Fe')
+            dlg2.graphicsView3.addItem(r1)
+            allRays1.append(r1)
+        
+        for wl in np.linspace(WL_Blue, WL_Red, Num_color):
+            r2 = Ray(start=Point(100, -309), dir=(-1,0), wl=wl, WL_min=WL_Blue, WL_max=WL_Red, Laser='Fe')
+            dlg2.graphicsView3.addItem(r2)
+            allRays2.append(r2)
+        
+        for wl in np.linspace(WL_Blue, WL_Red, Num_color):
+            r3 = Ray(start=Point(100, -316), dir=(-1,0), wl=wl, WL_min=WL_Blue, WL_max=WL_Red, Laser='Fe')
+            dlg2.graphicsView3.addItem(r3)
+            allRays3.append(r3)
+        
+        for o in optics:
+            dlg2.graphicsView3.addItem(o)  
+        tracer1 = Tracer(allRays1, optics)
+        tracer2 = Tracer(allRays2, optics)
+        tracer3 = Tracer(allRays3, optics)
+        pg.exec()
+
 ########################################################
 ########################################################        
 if __name__ == "__main__":
     global Grating_ID
-    GratingID = 3
-    Groove = 300
-    inst_DK = DK480_control.Connect()
-    DK = DK480_control.DK480(inst_DK)   
+    # GratingID = 3
+    # Groove = 300
+    # inst_DK = DK480_control.Connect()
+    # DK = DK480_control.DK480(inst_DK)   
     app = QApplication(sys.argv)
     window = MainWindow()
+    subWindow = SubWindow()
     app.exec_()
+
 # %%
