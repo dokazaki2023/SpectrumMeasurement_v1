@@ -152,7 +152,6 @@ class ParamObj(object):
         # Retrieve the value of a parameter
         return self.__params[param]
 
-
 class Optic(pg.GraphicsObject, ParamObj):
     """
     Represents an optical element within the simulation. 
@@ -405,6 +404,108 @@ class Grating(Optic):
         else:
             ray.setEnd(None)
         return [ray]
+
+# class Grating2(Optic):
+#     def __init__(self, **params):
+#         defaults = {
+#             'r1': 0,
+#             'r2': 0,
+#             'd': 0.01,
+#             'Groove':300,
+#             'name':'Grating'
+#         }
+#         defaults.update(params)
+#         d = defaults.pop('d')
+#         defaults['x1'] = -d/2.
+#         defaults['x2'] = d/2.
+#         self.pitch = 1000/defaults.pop('Groove')
+#         self.name = defaults.pop('name')
+#         gitem = CircularSolid(brush=(100,100,100,255), **defaults)
+#         Optic.__init__(self, self.name, gitem, **defaults)
+
+#     def propagateRay(self, ray):
+#         surface = self.surfaces[0]
+#         p1, ai = surface.intersectRay(ray)
+#         rays = []  # To store the resulting rays
+#         try:
+#             sign_incidence_angle = np.sign(ai)
+#         except:
+#             pass
+
+#         if p1 is not None:
+#             p1 = surface.mapToItem(ray, p1)
+#             rd = ray['dir']
+#             ray.setEnd(p1)  # Update the endpoint of the original ray
+
+#             # Calculate the reflected ray
+#             p1 = surface.mapToItem(ray, p1)
+#             rd = ray['dir']
+#             ray.setEnd(p1)
+#             a1 = atan2(rd[1], rd[0])
+#             ar = a1 + np.pi - 2 * ai
+#             dp = Point(cos(ar), sin(ar))
+#             ray = Ray(parent=ray, dir=dp)
+            
+#             reflected_ray = Ray(start=p1, dir=dp, wl=ray['wl'], ior=ray['ior'])
+#             rays.append(reflected_ray)
+
+#             # Calculate the diffracted ray
+#             p1 = surface.mapToItem(ray, p1)
+#             rd = ray['dir']
+#             a1 = atan2(rd[1], rd[0])
+#             ray.setEnd(p1)
+#             wl = ray['wl']/1000 # wavelength
+#             try:
+#                 if sign_incidence_angle < 0:
+#                     ai = np.abs(ai)
+#                     ar = a1 + np.pi + ai - asin(wl/self.pitch - sin(ai))
+#                 else:
+#                     ar = a1 + np.pi - ai + asin(wl/self.pitch - sin(ai))
+#             except ValueError:
+#                 ar = np.nan
+                
+#             dp = Point(cos(ar), sin(ar))
+#             ray = Ray(parent=ray, dir=dp)
+#             diffracted_ray = Ray(parent=ray, dir=dp)
+#             rays.append(diffracted_ray)
+#         else:
+#             ray.setEnd(None)
+
+#         return rays
+
+# class BeamSplitter(Optic):
+#     """
+#     Represents a beam splitter in the optical simulation. 
+#     A beam splitter divides an incoming ray into two parts: a transmitted ray that continues in the same direction, 
+#     and a reflected ray that is deflected at a 90-degree angle.
+#     """
+
+#     def __init__(self, **params):
+#         """
+#         Initializes a BeamSplitter object with specified properties.
+#         Parameters:
+#         - params: A dictionary containing the properties of the beam splitter, such as position and orientation.
+#         """
+#         super(BeamSplitter, self).__init__(**params)
+#         self.name = params.get('name', 'BeamSplitter')
+
+#     def propagateRay(self, ray):
+#         """
+#         Simulates the interaction of a ray with the beam splitter, generating a transmitted ray and a reflected ray at a 90-degree angle.
+#         Parameters:
+#         - ray: The incoming Ray object.
+#         Returns:
+#         - A list containing the transmitted and reflected Ray objects.
+#         """
+#         # Calculate the transmitted ray (continues in the same direction)
+#         transmitted_ray = Ray(start=ray['end'], dir=ray['dir'], wl=ray['wl'], ior=ray['ior'])
+
+#         # Calculate the reflected ray (deflected at a 90-degree angle)
+#         angle_of_incidence = np.arctan2(ray['dir'].y(), ray['dir'].x())
+#         reflected_angle = angle_of_incidence + np.pi / 2  # 90 degrees in radians
+#         reflected_dir = Point(np.cos(reflected_angle), np.sin(reflected_angle))
+#         reflected_ray = Ray(start=ray['end'], dir=reflected_dir, wl=ray['wl'], ior=ray['ior'])
+#         return [transmitted_ray, reflected_ray]
 
 class CircularSolid(pg.GraphicsObject, ParamObj):
     """

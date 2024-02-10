@@ -12,6 +12,7 @@ from PyQt5 import uic
 import sys
 import DK480_control
 import numpy as np
+import pandas as pd
 import pyqtgraph as pg
 import uuid
 import datetime
@@ -31,7 +32,7 @@ class MainWindow(QMainWindow):
         self.x = {}
         self.y = {}
         self.lines = {}
-        self.lines2 = {}
+        self.color_index = 0
 
         ## Default ##
         dlg1.LineEdit_Folders.setText("C:\\Users\\okazaki\\Desktop\\実験データ\\")
@@ -75,6 +76,8 @@ class MainWindow(QMainWindow):
         dlg1.Button_Go.clicked.connect(self.Go)
         dlg1.Button_Measure.clicked.connect(self.execute)
         dlg1.Button_Update.clicked.connect(self.Update)
+        dlg1.Button_Previous.clicked.connect(self.AddPlot)
+        dlg1.Button_Delete.clicked.connect(self.DeletePlot)
 
         font = 'Yu Gothic UI'
         p1 = dlg1.graphicsView1.plotItem
@@ -326,10 +329,25 @@ class MainWindow(QMainWindow):
             BG_data.append(BG_now)
         BG = np.average(BG_data)
         dlg1.textEdit.append('BG measurement is finished')
+        
+    def AddPlot(self):
+        filename = str(dlg1.LineEdit_Folders2.text())
+        df = pd.read_csv(filename)
+        x = df.wavelength.values
+        y = df.rawdata.values
+        dlg1.graphicsView2.plotItem.addItem(
+            pg.PlotCurveItem(x=x, y=y, pen = pg.mkPen(pyqtgraph.hsvColor(hue=self.color_index/5, sat=1.0, val=1.0, alpha=1.0), 
+                                                        style = Qt.SolidLine), antialias = True))
+        self.color_index += 1
+        if self.color_index > 5:
+            self.color_index = 0
+        
+    def DeletePlot(self):
+        dlg1.graphicsView2.clear()
+        
     
     def execute(self):
         dlg1.graphicsView1.clear()
-        dlg1.graphicsView2.clear()
         DK.PreCheck()
         worker = Worker()
         worker.signals.data.connect(self.receive_data)
@@ -341,12 +359,10 @@ class MainWindow(QMainWindow):
             self.x[worker_id] = [x]
             self.y[worker_id] = [y]
             self.lines[worker_id] = dlg1.graphicsView1.plot(self.x[worker_id],self.y[worker_id])
-            self.lines2[worker_id]= dlg1.graphicsView2.plot(self.x[worker_id],np.abs(self.y[worker_id]))
             return
         self.x[worker_id].append(x) # Update existing plot/data
         self.y[worker_id].append(y)
         self.lines[worker_id].setData(self.x[worker_id], self.y[worker_id])
-        self.lines2[worker_id].setData(self.x[worker_id], np.abs(self.y[worker_id]))
 
 
 class WorkerSignals(QObject):
@@ -502,8 +518,8 @@ if __name__ == "__main__":
     global Grating_ID
     GratingID = 3
     Groove = 300
-    inst_DK  = DK480_control.Connect()
-    DK = DK480_control.DK480(inst_DK)
+    # inst_DK  = DK480_control.Connect()
+    # DK = DK480_control.DK480(inst_DK)
     app = QApplication(sys.argv)
     window = MainWindow()
     # subWindow = SubWindow()

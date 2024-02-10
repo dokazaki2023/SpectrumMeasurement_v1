@@ -71,9 +71,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>430</y>
+     <y>450</y>
      <width>441</width>
-     <height>351</height>
+     <height>331</height>
     </rect>
    </property>
    <property name="font">
@@ -153,6 +153,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>75</weight>
      <bold>true</bold>
     </font>
    </property>
@@ -173,6 +174,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>75</weight>
      <bold>true</bold>
     </font>
    </property>
@@ -193,6 +195,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>75</weight>
      <bold>true</bold>
     </font>
    </property>
@@ -437,6 +440,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>75</weight>
      <bold>true</bold>
     </font>
    </property>
@@ -457,6 +461,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -477,6 +482,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -497,6 +503,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -517,6 +524,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -537,6 +545,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -557,6 +566,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -577,6 +587,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -597,6 +608,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -617,6 +629,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -637,6 +650,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -657,6 +671,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -677,6 +692,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -716,6 +732,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>75</weight>
      <bold>true</bold>
     </font>
    </property>
@@ -736,6 +753,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -756,6 +774,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -776,6 +795,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -796,6 +816,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -848,6 +869,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -975,6 +997,7 @@
     <font>
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
     </font>
    </property>
@@ -1129,7 +1152,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>400</y>
+     <y>390</y>
      <width>71</width>
      <height>24</height>
     </rect>
@@ -1167,6 +1190,34 @@
      <family>游ゴシック</family>
      <pointsize>8</pointsize>
     </font>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Button_Delete">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>410</y>
+     <width>71</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>游ゴシック</family>
+     <pointsize>8</pointsize>
+    </font>
+   </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="text">
+    <string>Del</string>
+   </property>
+   <property name="autoDefault">
+    <bool>false</bool>
    </property>
   </widget>
  </widget>
