@@ -1,0 +1,181 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat May 27 08:28:22 2023
+@author: Daiki Okazaki @ Laser 
+"""
+
+import time
+import serial
+from serial.tools import list_ports
+import numpy as np
+import threading
+
+REFRESH_SERIAL_READ = 1e-4
+WAIT_TIME = 1e-1
+
+class DK480Control:
+    def __init__(self, port="COM4", baudrate=9600):
+        self.ser = serial.Serial()
+        self.ser.baudrate = baudrate
+        self.ser.port = port
+        self.ser.rtscts = True
+        self.ser.dsrdtr = False
+        self.ser.timeout = 2 * REFRESH_SERIAL_READ
+    
+    @staticmethod
+    def list_devices():
+        ports = list_ports.comports()
+        devices = [info.device for info in ports]
+        if not devices:
+            print("エラー: ポートが見つかりませんでした")
+            return None
+        return devices
+
+    def connect(self):
+        try:
+            self.ser = serial.Serial("COM4",  baudrate=9600, bytesize=8, parity='N', stopbits=1, timeout=self.ser.timeout)
+            self.ser.open()
+            print(f"Device {self.ser.port} connected successfully.")
+        except serial.SerialException as e:
+            print("エラー：ポートが開けませんでした。", e)
+            return False
+        return True
+
+    def disconnect(self):
+        if self.ser.is_open:
+            self.ser.close()
+            print("Serial connection closed.")
+
+    def binary_to_string(self, binary_data, encoding='shift-jis'):
+        try:
+            return binary_data.decode(encoding, 'replace')
+        except UnicodeDecodeError:
+            return ''
+
+    class DeviceOperation:
+        def __init__(self, serial_connection):
+            self.ser = serial_connection
+            self.flag_finished = False
+            self.response_received = False
+            self.flag_timeout = False
+            
+        def binary_to_string_UTF(self, binary_data):
+            try:
+                return ord(binary_data.decode('utf-8').strip())
+            except Exception as e:
+                print(f"Error converting binary to UTF-8 string: {e}")
+                return None
+
+        def binary_to_string_ShiftJis(self, binary_data):
+            try:
+                return ord(binary_data.decode('shift_jis').strip())
+            except Exception as e:
+                print(f"Error converting binary to Shift-JIS string: {e}")
+                return None
+        
+        def open_serial_connection(self):
+            if not self.ser.is_open:
+                self.ser.open()
+
+        def close_serial_connection(self):
+            if self.ser.is_open:
+                self.ser.close()
+
+        def send_command(self, command):
+            self.open_serial_connection()
+            self.ser.write(command.encode('utf-8'))
+            time.sleep(0.1)
+
+        def is_send(self, command):
+            start_time = time.time()
+            timeout = 2
+            while self.flag_finished:
+                if time.time() - start_time > timeout:
+                    print("Timeout: No response received.")
+                    self.flag_timeout = True
+                    self.flag_finished = False
+                    break
+                
+                result = self.ser.readline()
+                if result:
+                    result_int = self.binary_to_string_UTF(result)
+                    command_int = ord(command)
+                    if command_int == result_int:
+                        self.response_received = True
+                        self.flag_finished = False
+
+        def is_finished(self, timeout):
+            self.flag_timeout = False
+            start_time = time.time()
+            while self.flag_finished:
+                if time.time() - start_time > timeout:
+                    print("Timeout: No response received.")
+                    self.flag_timeout = True
+                    self.flag_finished = False
+                    break
+                
+                result = self.ser.readline()
+                if result:
+                    result_int = self.binary_to_string_ShiftJis(result)
+                    if 24 == result_int:  # Assuming 24 is the expected response code
+                        self.response_received = True
+                        self.flag_finished = False
+                        print('IsFinished OK')
+
+        @staticmethod
+        def wavelength_convert(wavelength):
+            # Convert wavelength to an integer and then to a hexadecimal string, removing the '0x' prefix.
+            wavelength_int = int(wavelength * 100)
+            hex_str = format(wavelength_int, '06x')  # Ensure the hex string is padded to 6 characters.
+            # Extract high, mid, and low bytes from the hex string.
+            high, mid, low = (int(hex_str[i:i+2], 16) for i in range(0, 6, 2))
+            return high, mid, low
+        
+        @staticmethod
+        def speed_convert(wavelength_speed):
+            # Convert speed to an integer and then to a hexadecimal string, removing the '0x' prefix.
+            speed_int = int(wavelength_speed)
+            hex_str = format(speed_int, '04x')  # Ensure the hex string is padded to 4 characters.
+            # Extract high and low bytes from the hex string.
+            high = int(hex_str[:2], 16)  # First two characters for high byte
+            low = int(hex_str[2:], 16)   # Last two characters for low byte
+            return high, low
+
+        def slit_adjust(self, slit_width):
+            # Convert slit width to a command format
+            command_prefix = chr(14)  # Assuming <14> is the prefix for slit adjustment
+            slit_width_command = slit_width.to_bytes(2, 'big')
+            # Send the command prefix to prepare the device for receiving the slit width adjustment
+            
+            #! Start IsSend in a separate thread to listen for responses before sending the command
+            is_send_thread = threading.Thread(target=self.is_send, args=(command_prefix,))  # chr(26) is the command to be sent
+            is_send_thread.start()
+            # Allow a very short delay to ensure the thread is listening # Adjust this value as needed; it should be as short as possible
+            time.sleep(0.1)  
+            # Send the command
+            self.send_command(command_prefix)
+            # Wait for the IsSend thread to finish
+            is_send_thread.join()
+            self.ser.close()
+            
+            # Implement asynchronous response handling if necessary
+            self.handle_response_async()
+            return
+
+        def handle_response_async(self):
+            """Handles device responses asynchronously, if applicable."""
+            # Placeholder for implementing threading logic or other asynchronous handling
+            # This could involve starting a thread that listens for a response from the device
+            # and updates `self.response_received` accordingly.
+            # Initialize the flag to indicate the thread should listen for a response
+            self.flag_finished = True
+            self.response_received = False
+
+if __name__ == '__main__':
+    DK480_control = DK480Control("COM4", 9600)
+    if DK480_control.connect():
+        device_op = DK480_control.DeviceOperation(DK480_control.ser)
+        # device_op.grating_select(1)  # Example of selecting grating 1
+        # device_op.go_to(500)  # Example of moving to 500 nm wavelength
+        device_op.slit_adjust(200)  # Example of adjusting slit width to 200
+        # DK480_control.disconnect()
