@@ -141,27 +141,6 @@ class DK480Control:
             high = int(hex_str[:2], 16)  # First two characters for high byte
             low = int(hex_str[2:], 16)   # Last two characters for low byte
             return high, low
-
-        def slit_adjust(self, slit_width):
-            # Convert slit width to a command format
-            command_prefix = chr(14)  # Assuming <14> is the prefix for slit adjustment
-            slit_width_command = slit_width.to_bytes(2, 'big')
-            # Send the command prefix to prepare the device for receiving the slit width adjustment
-            
-            #! Start IsSend in a separate thread to listen for responses before sending the command
-            is_send_thread = threading.Thread(target=self.is_send, args=(command_prefix,))  # chr(26) is the command to be sent
-            is_send_thread.start()
-            # Allow a very short delay to ensure the thread is listening # Adjust this value as needed; it should be as short as possible
-            time.sleep(0.1)  
-            # Send the command
-            self.send_command(command_prefix)
-            # Wait for the IsSend thread to finish
-            is_send_thread.join()
-            self.ser.close()
-            
-            # Implement asynchronous response handling if necessary
-            self.handle_response_async()
-            return
         
         def slit_adjust(self, slit_width):
             self.flag_finished = True
