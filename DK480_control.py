@@ -279,7 +279,9 @@ class DK480:
 if __name__ == '__main__':
     inst_DK = Connect()
     DK = DK480(inst_DK)
-    DK.Test()
+    DK.PreCheck()
     # DK.GratingSelect(3)
     # DK.SlitAdjust(200)
-    # DK.GoTo(3500)
+    DK.GoTo(3500)
+
+# %%

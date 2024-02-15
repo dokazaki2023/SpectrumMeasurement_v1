@@ -3,7 +3,7 @@
 Created on Sat May 27 08:28:22 2023
 @author: Daiki Okazaki @ Laser 
 """
-
+#%%
 import time
 import serial
 from serial.tools import list_ports
@@ -34,7 +34,6 @@ class DK480Control:
     def connect(self):
         try:
             self.ser = serial.Serial("COM4",  baudrate=9600, bytesize=8, parity='N', stopbits=1, timeout=self.ser.timeout)
-            self.ser.open()
             print(f"Device {self.ser.port} connected successfully.")
         except serial.SerialException as e:
             print("エラー：ポートが開けませんでした。", e)
@@ -177,5 +176,7 @@ if __name__ == '__main__':
         device_op = DK480_control.DeviceOperation(DK480_control.ser)
         # device_op.grating_select(1)  # Example of selecting grating 1
         # device_op.go_to(500)  # Example of moving to 500 nm wavelength
-        device_op.slit_adjust(200)  # Example of adjusting slit width to 200
-        # DK480_control.disconnect()
+        # device_op.slit_adjust(200)  # Example of adjusting slit width to 200
+        DK480_control.disconnect()
+        pass
+# %%
