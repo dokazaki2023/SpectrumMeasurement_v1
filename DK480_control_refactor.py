@@ -62,14 +62,14 @@ class DK480Control:
             
         def binary_to_string_UTF(self, binary_data):
             try:
-                return ord(binary_data.decode('utf-8').strip())
+                return ord(binary_data.strip().decode('utf-8'))
             except Exception as e:
                 print(f"Error converting binary to UTF-8 string: {e}")
                 return None
 
         def binary_to_string_ShiftJis(self, binary_data):
             try:
-                return ord(binary_data.decode('shift_jis').strip())
+                return ord(binary_data.strip().decode('shift-jis'))
             except Exception as e:
                 print(f"Error converting binary to Shift-JIS string: {e}")
                 return None
@@ -114,14 +114,14 @@ class DK480Control:
                     self.flag_timeout = True
                     self.flag_finished = False
                     break
-                
+
                 result = self.ser.readline()
                 if result:
                     result_int = self.binary_to_string_ShiftJis(result)
                     if 24 == result_int:  # Assuming 24 is the expected response code
                         self.response_received = True
                         self.flag_finished = False
-                        print('IsFinished OK')
+                        # print('IsFinished OK')
 
         @staticmethod
         def wavelength_convert(wavelength):
@@ -141,14 +141,14 @@ class DK480Control:
             high = int(hex_str[:2], 16)  # First two characters for high byte
             low = int(hex_str[2:], 16)   # Last two characters for low byte
             return high, low
-        
+
         def slit_adjust(self, slit_width):
             self.flag_finished = True
             self.response_received = False
             # Ensure the serial port is open
             if not self.ser.isOpen():
                 self.ser.open()
-                
+
             slit_width = int(slit_width)
             command_slit = slit_width.to_bytes(2, 'big')
             command_prefix = chr(14)  # Command to adjust slit width
@@ -156,18 +156,93 @@ class DK480Control:
             is_send_thread.start()
             time.sleep(0.1)
             self.ser.write(command_prefix.encode('utf-8'))
-            is_send_thread.join()            
+            is_send_thread.join()
+            self.ser.close()
+
+            self.flag_finished = True
+            self.response_received = False
+            if not self.ser.isOpen():
+                self.ser.open()
+
+            is_finished_thread = threading.Thread(target=self.is_finished, args=(20,))
+            is_finished_thread.start()
+            time.sleep(0.1)  
+            self.ser.write(command_slit)
+            is_finished_thread.join()
+            self.ser.close()
+
+            return
+
+        def precheck(self):
+            #? To DK240/480: <27> ECHO # Ensure the serial port is open
+            self.flag_finished = True
+            self.response_received = False
+            if not self.ser.isOpen():
+                self.ser.open()
+
+            command_prefix = chr(27)
+            is_send_thread = threading.Thread(target=self.is_send, args=(command_prefix,))  # chr(27) is the command to be sent
+            is_send_thread.start()
+            time.sleep(0.1)  
+            self.ser.write(command_prefix.encode('utf-8'))
+            is_send_thread.join()
+            self.ser.close()
+            # print('Pre-check command run correctly')
+            return
+
+        def grating_select(self, GratingID,):        #? To DK240/480: <26> GRTSEL
+            self.flag_finished = True
+            self.response_received = False
+            if not self.ser.isOpen():
+                self.ser.open()
+
+            command_prefix = chr(26)
+            is_send_thread = threading.Thread(target=self.is_send, args=(command_prefix,))  # chr(26) is the command to be sent
+            is_send_thread.start()
+            time.sleep(0.1)
+            self.ser.write(command_prefix.encode('utf-8'))
+            is_send_thread.join()
+            self.ser.close()
+
+            #? To DK240/480: One Byte Grating ID
+            self.flag_finished = True
+            self.response_received = False
+            if not self.ser.isOpen():
+                self.ser.open()
+
+            command = chr(GratingID)
+            is_finished_thread = threading.Thread(target=self.is_finished, args=(150,))
+            is_finished_thread.start()
+            time.sleep(0.1)
+            self.ser.write(command.encode('utf-8'))
+            is_finished_thread.join()
+            self.ser.close()
+            return
+
+        def go_to(self, Wavelength):
+            self.flag_finished = True
+            self.response_received = False
+            if not self.ser.isOpen(): # Ensure the serial port is open
+                self.ser.open()
+
+            high, mid, low = self.wavelength_convert(Wavelength)
+            command_WL = bytes([high, mid, low])
+            command_prefix = chr(16)
+            is_send_thread = threading.Thread(target=self.is_send, args=(command_prefix,))  # chr(26) is the command to be sent
+            is_send_thread.start()
+            time.sleep(0.1)  
+            self.ser.write(command_prefix.encode('utf-8'))
+            is_send_thread.join()
             self.ser.close()
             
             self.flag_finished = True
             self.response_received = False
             if not self.ser.isOpen():
                 self.ser.open()
-                
-            is_finished_thread = threading.Thread(target=self.is_finished, args=(20,))
+            is_finished_thread = threading.Thread(target=self.is_finished, args=(45,))  # chr(26) is the command to be sent
             is_finished_thread.start()
-            time.sleep(0.1)  
-            self.ser.write(command_slit)
+            time.sleep(0.1)
+            self.ser.write(command_WL)
             is_finished_thread.join()
             self.ser.close()
             return
@@ -176,9 +251,11 @@ if __name__ == '__main__':
     DK480_control = DK480Control("COM4", 9600)
     if DK480_control.connect():
         device_op = DK480_control.DeviceOperation(DK480_control.ser)
-        # device_op.grating_select(1)  # Example of selecting grating 1
-        # device_op.go_to(500)  # Example of moving to 500 nm wavelength
-        # device_op.slit_adjust(200)  # Example of adjusting slit width to 200
+        device_op.grating_select(3)  # Example of selecting grating 1
+        device_op.go_to(4500)  # Example of moving to 500 nm wavelength
+        #! If I use the same value twice, the error happens: Error converting binary to Shift-JIS string: ord() expected a character, but string of length 2 found
+        device_op.slit_adjust(1000)  
+        device_op.precheck()
         DK480_control.disconnect()
         pass
 # %%
