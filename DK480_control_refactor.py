@@ -44,6 +44,8 @@ class DK480Control:
         if self.ser.is_open:
             self.ser.close()
             print("Serial connection closed.")
+        else:
+            print("Serial connection was close.")
 
     def binary_to_string(self, binary_data, encoding='shift-jis'):
         try:
@@ -160,15 +162,36 @@ class DK480Control:
             # Implement asynchronous response handling if necessary
             self.handle_response_async()
             return
-
-        def handle_response_async(self):
-            """Handles device responses asynchronously, if applicable."""
-            # Placeholder for implementing threading logic or other asynchronous handling
-            # This could involve starting a thread that listens for a response from the device
-            # and updates `self.response_received` accordingly.
-            # Initialize the flag to indicate the thread should listen for a response
+        
+        def slit_adjust(self, slit_width):
             self.flag_finished = True
             self.response_received = False
+            # Ensure the serial port is open
+            if not self.ser.isOpen():
+                self.ser.open()
+                
+            slit_width = int(slit_width)
+            command_slit = slit_width.to_bytes(2, 'big')
+            command_prefix = chr(14)  # Command to adjust slit width
+            is_send_thread = threading.Thread(target=self.is_send, args=(command_prefix,))
+            is_send_thread.start()
+            time.sleep(0.1)
+            self.ser.write(command_prefix.encode('utf-8'))
+            is_send_thread.join()            
+            self.ser.close()
+            
+            self.flag_finished = True
+            self.response_received = False
+            if not self.ser.isOpen():
+                self.ser.open()
+                
+            is_finished_thread = threading.Thread(target=self.is_finished, args=(20,))
+            is_finished_thread.start()
+            time.sleep(0.1)  
+            self.ser.write(command_slit)
+            is_finished_thread.join()
+            self.ser.close()
+            return
 
 if __name__ == '__main__':
     DK480_control = DK480Control("COM4", 9600)
