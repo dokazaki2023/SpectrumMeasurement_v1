@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat May 27 08:28:22 2023
-
 @author: Daiki Okazaki @ Laser 
 """
-
 #%%
 import time
 import serial
@@ -12,276 +10,252 @@ from serial.tools import list_ports
 import numpy as np
 import threading
 
-REFLESH_SERIAL_READ = 1e-4
+REFRESH_SERIAL_READ = 1e-4
 WAIT_TIME = 1e-1
 
-def Connect(baudrate=9600):
-    global ser
-    ser = serial.Serial()
-    ser.baudrate = baudrate
-    ser.rtscts = True
-    ser.dsrdtr = False
-    ser.timeout = 2*REFLESH_SERIAL_READ
-    ports = list_ports.comports()    # ポートデータを取得
-    devices = [info.device for info in ports]
-    print("Number of controller: {0}".format(devices))
+class DK480Control:
+    def __init__(self, port="COM4", baudrate=9600):
+        self.ser = serial.Serial()
+        self.ser.baudrate = baudrate
+        self.ser.port = port
+        self.ser.rtscts = True
+        self.ser.dsrdtr = False
+        self.ser.timeout = 2 * REFRESH_SERIAL_READ
+    
+    @staticmethod
+    def list_devices():
+        ports = list_ports.comports()
+        devices = [info.device for info in ports]
+        if not devices:
+            print("エラー: ポートが見つかりませんでした")
+            return None
+        return devices
 
-    if len(devices) == 0: # シリアル通信できるデバイスが見つからなかった場合
-        print("エラー: ポートが見つかりませんでした")
-        return None
-    else:
+    def connect(self):
         try:
-            ser = serial.Serial("COM4",  baudrate=9600, bytesize=8, parity='N', stopbits=1, timeout=REFLESH_SERIAL_READ)
-        except Exception as e:
-            print("エラー：ポートが開けませんでした。")
-            print(e)
+            self.ser = serial.Serial("COM4",  baudrate=9600, bytesize=8, parity='N', stopbits=1, timeout=self.ser.timeout)
+            print(f"Device {self.ser.port} connected successfully.")
+        except serial.SerialException as e:
+            print("エラー：ポートが開けませんでした。", e)
+            return False
+        return True
+
+    def disconnect(self):
+        if self.ser.is_open:
+            self.ser.close()
+            print("Serial connection closed.")
         else:
-            ser.close()
-            return ser
+            print("Serial connection was close.")
 
-def binary_to_string_UTF(result):
-    # print(result)
-    try:
-        result_string = ord(result.strip().decode('utf-8'))
-    except:
-        result_string = 0
-    return result_string
+    def binary_to_string(self, binary_data, encoding='shift-jis'):
+        try:
+            return binary_data.decode(encoding, 'replace')
+        except UnicodeDecodeError:
+            return ''
 
-def binary_to_string_ShiftJis(result):
-    # print(result)
-    try:
-        result_string = ord(result.strip().decode('shift-jis'))
-    except:
-        result_string = 0
-    return result_string
+    class DeviceOperation:
+        def __init__(self, serial_connection):
+            self.ser = serial_connection
+            self.flag_finished = False
+            self.response_received = False
+            self.flag_timeout = False
+            
+        def binary_to_string_UTF(self, binary_data):
+            try:
+                return ord(binary_data.strip().decode('utf-8'))
+            except Exception as e:
+                print(f"Error converting binary to UTF-8 string: {e}")
+                return None
 
-def binary_to_string(result):
-    # print(result)
-    try:
-        result_string = result.decode('shift-jis', 'replace')
-    except:
-        result_string = 0
-    return result_string
-
-class DK480:
-    def __init__(self, ser):    
-        self.ser = ser
-        self.flag_finished = False
-        self.response_received = False
-        self.flag_timeout = False
-
-    def WavelengthConvert(self, Wavelength):
-        Wavelength = int(Wavelength*100)
-        Wavelength16 = hex(Wavelength)
-        if Wavelength16.startswith('0x'):
-            data = Wavelength16[2:]
-            Low = data[-2:]
-            Mid = data[-4:-2]
-            if len(data) == 1:
-                High = '00'
-                Mid = '00'
-                Low = '0' + data[-1]
-            elif len(data) == 2:
-                High = '00'
-                Mid = '00'
-            elif len(data) == 3:
-                High = '00'
-                Mid = '0' + data[-3]
-            elif len(data) == 4:
-                High = '00'
-            elif len(data) == 5:
-                High = '0' + data[0]
-            else:
-                High = data[0:1]
-        High = int(High, 16)
-        Mid = int(Mid, 16)
-        Low = int(Low, 16)
-        return  High, Mid, Low
-    
-    def SpeedConvert(self, Wavelength_Speed):
-        Wavelength_Speed = int(Wavelength_Speed)
-        Wavelength_Speed16 = hex(Wavelength_Speed)
-        if Wavelength_Speed16.startswith('0x'):
-            data = Wavelength_Speed16[2:]
-            Low = data[-2:]
-            if len(data) == 2:
-                High = '00'
-            elif len(data) == 3:
-                High = '0' + data[0]
-            else:
-                High = data[-4:-2]
-        High = int(High, 16)
-        Low = int(Low, 16)
-        return  High, Low
-
-    def GratingSelect(self, GratingID,):        #? To DK240/480: <26> GRTSEL
-        # Ensure the serial port is open
-        if not self.ser.isOpen():
-            self.ser.open()
-        # Initialize the flag to indicate the thread should listen for a response
-        self.flag_finished = True
-        self.response_received = False
-        Command = chr(26)
-        # Start IsSend in a separate thread to listen for responses before sending the command
-        is_send_thread = threading.Thread(target=self.IsSend, args=(Command,))  # chr(26) is the command to be sent
-        is_send_thread.start()
-        # Allow a very short delay to ensure the thread is listening # Adjust this value as needed; it should be as short as possible
-        time.sleep(0.1)
-        # Send the command
-        self.ser.write(Command.encode('utf-8'))
-        # Wait for the IsSend thread to finish
-        is_send_thread.join()
-        self.ser.close()
-
-        #? To DK240/480: One Byte Grating ID
-        if not self.ser.isOpen():
-            self.ser.open()
-        # Initialize the flag to indicate the thread should listen for a response
-        self.flag_finished = True
-        self.response_received = False
-        Command = chr(GratingID)
-        is_finished_thread = threading.Thread(target=self.IsFinished, args=(150,))  # chr(26) is the command to be sent
-        is_finished_thread.start()
-        time.sleep(0.1)
-        self.ser.write(Command.encode('utf-8'))
-        is_finished_thread.join()
-        self.ser.close()
-        return
-    
-    def GoTo(self, Wavelength):
-        #? To DK240/480: <16> # To DK240/480: <High Byte> <Mid Byte> <Low Byte>
-        if not self.ser.isOpen(): # Ensure the serial port is open
-            self.ser.open()
-        # Initialize the flag to indicate the thread should listen for a response
-        self.flag_finished = True
-        self.response_received = False
-        High, Mid, Low = self.WavelengthConvert(Wavelength)
-        Command_WL = bytes([High, Mid, Low])
-        Command = chr(16)
-        # Start IsSend in a separate thread to listen for responses before sending the command
-        is_send_thread = threading.Thread(target=self.IsSend, args=(Command,))  # chr(26) is the command to be sent
-        is_send_thread.start()
-        # Allow a very short delay to ensure the thread is listening # Adjust this value as needed; it should be as short as possible
-        time.sleep(0.1)  
-        # Send the command
-        self.ser.write(Command.encode('utf-8'))
-        # Wait for the IsSend thread to finish
-        is_send_thread.join()
-        self.ser.close()
+        def binary_to_string_ShiftJis(self, binary_data):
+            try:
+                return ord(binary_data.strip().decode('shift-jis'))
+            except Exception as e:
+                print(f"Error converting binary to Shift-JIS string: {e}")
+                return None
         
-        if not self.ser.isOpen():
-            self.ser.open()
-        # Initialize the flag to indicate the thread should listen for a response
-        self.flag_finished = True
-        self.response_received = False
-        
-        is_finished_thread = threading.Thread(target=self.IsFinished, args=(20,))  # chr(26) is the command to be sent
-        is_finished_thread.start()
-        time.sleep(0.1)
-        self.ser.write(Command_WL)
-        is_finished_thread.join()
-        self.ser.close()
-        return
+        def open_serial_connection(self):
+            if not self.ser.is_open:
+                self.ser.open()
 
-    def IsSend(self, Command):
-        start_time = time.time()  # Record the start time
-        timeout = 2  # Timeout in seconds
-        while self.flag_finished:
-            if time.time() - start_time > timeout:
-                print("Timeout: No response received.")
-                self.flag_timeout = True
-                self.flag_finished = False  # Exit the loop after the timeout
-                break
-        
-            result = self.ser.readline()
-            if result:
-                result_int = binary_to_string_UTF(result)
-                Command_int = ord(Command)
-                if Command_int == result_int:
-                    self.response_received = True
+        def close_serial_connection(self):
+            if self.ser.is_open:
+                self.ser.close()
+
+        def send_command(self, command):
+            self.open_serial_connection()
+            self.ser.write(command.encode('utf-8'))
+            time.sleep(0.1)
+
+        def is_send(self, command):
+            start_time = time.time()
+            timeout = 2
+            while self.flag_finished:
+                if time.time() - start_time > timeout:
+                    print("Timeout: No response received.")
+                    self.flag_timeout = True
                     self.flag_finished = False
-                    # print('IsSend OK')
+                    break
+                
+                result = self.ser.readline()
+                if result:
+                    result_int = self.binary_to_string_UTF(result)
+                    command_int = ord(command)
+                    if command_int == result_int:
+                        self.response_received = True
+                        self.flag_finished = False
 
-    def IsFinished(self, timeout):
-        self.flag_timeout = False
-        start_time = time.time()  # Record the start time
-        while self.flag_finished:
-            if time.time() - start_time > timeout:
-                print("Timeout: No response received.")
-                self.flag_timeout = True
-                self.flag_finished = False  # Exit the loop after the timeout
-                break
-            result = self.ser.readline()
-            if result:
-                result_int = binary_to_string_ShiftJis(result)
-                if 24 == result_int:
-                    self.response_received = True
+        def is_finished(self, timeout):
+            self.flag_timeout = False
+            start_time = time.time()
+            while self.flag_finished:
+                if time.time() - start_time > timeout:
+                    print("Timeout: No response received.")
+                    self.flag_timeout = True
                     self.flag_finished = False
-                    print('IsFinished OK')
+                    break
 
-    def PreCheck(self):
-        #? To DK240/480: <27> ECHO # Ensure the serial port is open
-        if not self.ser.isOpen():
-            self.ser.open()
-        # Initialize the flag to indicate the thread should listen for a response
-        self.flag_finished = True
-        self.response_received = False
-        Command = chr(27)
-        # Start IsSend in a separate thread to listen for responses before sending the command
-        is_send_thread = threading.Thread(target=self.IsSend, args=(Command,))  # chr(27) is the command to be sent
-        is_send_thread.start()
-        # Allow a very short delay to ensure the thread is listening # Adjust this value as needed; it should be as short as possible
-        time.sleep(0.1)  
-        # Send the command
-        self.ser.write(Command.encode('utf-8'))
-        # Wait for the IsSend thread to finish
-        is_send_thread.join()
-        self.ser.close()
-        return
+                result = self.ser.readline()
+                if result:
+                    result_int = self.binary_to_string_ShiftJis(result)
+                    if 24 == result_int:  # Assuming 24 is the expected response code
+                        self.response_received = True
+                        self.flag_finished = False
+                        # print('IsFinished OK')
 
-    def SlitAdjust(self, SlitWidth):
-        SlitWidth = int(SlitWidth)
-        Command_Slit = SlitWidth.to_bytes(2,'big')
-        #? To DK240/480: <14> SLTADJ # Ensure the serial port is open
-        if not self.ser.isOpen():
-            self.ser.open()
-        # Initialize the flag to indicate the thread should listen for a response
-        self.flag_finished = True
-        self.response_received = False
-        Command = chr(14)
-        # Start IsSend in a separate thread to listen for responses before sending the command
-        is_send_thread = threading.Thread(target=self.IsSend, args=(Command,))  # chr(26) is the command to be sent
-        is_send_thread.start()
-        # Allow a very short delay to ensure the thread is listening # Adjust this value as needed; it should be as short as possible
-        time.sleep(0.1)  
-        # Send the command
-        self.ser.write(Command.encode('utf-8'))
-        # Wait for the IsSend thread to finish
-        is_send_thread.join()
-        self.ser.close()
+        @staticmethod
+        def wavelength_convert(wavelength):
+            # Convert wavelength to an integer and then to a hexadecimal string, removing the '0x' prefix.
+            wavelength_int = int(wavelength * 100)
+            hex_str = format(wavelength_int, '06x')  # Ensure the hex string is padded to 6 characters.
+            # Extract high, mid, and low bytes from the hex string.
+            high, mid, low = (int(hex_str[i:i+2], 16) for i in range(0, 6, 2))
+            return high, mid, low
         
-        #? To DK240/480:
-        if not self.ser.isOpen():
-            self.ser.open()
-        # Initialize the flag to indicate the thread should listen for a response
-        self.flag_finished = True
-        self.response_received = False
-        
-        is_finished_thread = threading.Thread(target=self.IsFinished, args=(20,))  # chr(26) is the command to be sent
-        is_finished_thread.start()
-        time.sleep(0.1)  
-        self.ser.write(Command_Slit)
-        is_finished_thread.join()
-        self.ser.close()
-        return
+        @staticmethod
+        def speed_convert(wavelength_speed):
+            # Convert speed to an integer and then to a hexadecimal string, removing the '0x' prefix.
+            speed_int = int(wavelength_speed)
+            hex_str = format(speed_int, '04x')  # Ensure the hex string is padded to 4 characters.
+            # Extract high and low bytes from the hex string.
+            high = int(hex_str[:2], 16)  # First two characters for high byte
+            low = int(hex_str[2:], 16)   # Last two characters for low byte
+            return high, low
 
+        def slit_adjust(self, slit_width):
+            self.flag_finished = True
+            self.response_received = False
+            # Ensure the serial port is open
+            if not self.ser.isOpen():
+                self.ser.open()
+
+            slit_width = int(slit_width)
+            command_slit = slit_width.to_bytes(2, 'big')
+            command_prefix = chr(14)  # Command to adjust slit width
+            is_send_thread = threading.Thread(target=self.is_send, args=(command_prefix,))
+            is_send_thread.start()
+            time.sleep(0.1)
+            self.ser.write(command_prefix.encode('utf-8'))
+            is_send_thread.join()
+            self.ser.close()
+
+            self.flag_finished = True
+            self.response_received = False
+            if not self.ser.isOpen():
+                self.ser.open()
+
+            is_finished_thread = threading.Thread(target=self.is_finished, args=(20,))
+            is_finished_thread.start()
+            time.sleep(0.1)  
+            self.ser.write(command_slit)
+            is_finished_thread.join()
+            self.ser.close()
+
+            return
+
+        def precheck(self):
+            #? To DK240/480: <27> ECHO # Ensure the serial port is open
+            self.flag_finished = True
+            self.response_received = False
+            if not self.ser.isOpen():
+                self.ser.open()
+
+            command_prefix = chr(27)
+            is_send_thread = threading.Thread(target=self.is_send, args=(command_prefix,))  # chr(27) is the command to be sent
+            is_send_thread.start()
+            time.sleep(0.1)  
+            self.ser.write(command_prefix.encode('utf-8'))
+            is_send_thread.join()
+            self.ser.close()
+            # print('Pre-check command run correctly')
+            return
+
+        def grating_select(self, GratingID,):        #? To DK240/480: <26> GRTSEL
+            self.flag_finished = True
+            self.response_received = False
+            if not self.ser.isOpen():
+                self.ser.open()
+
+            command_prefix = chr(26)
+            is_send_thread = threading.Thread(target=self.is_send, args=(command_prefix,))  # chr(26) is the command to be sent
+            is_send_thread.start()
+            time.sleep(0.1)
+            self.ser.write(command_prefix.encode('utf-8'))
+            is_send_thread.join()
+            self.ser.close()
+
+            #? To DK240/480: One Byte Grating ID
+            self.flag_finished = True
+            self.response_received = False
+            if not self.ser.isOpen():
+                self.ser.open()
+
+            command = chr(GratingID)
+            is_finished_thread = threading.Thread(target=self.is_finished, args=(150,))
+            is_finished_thread.start()
+            time.sleep(0.1)
+            self.ser.write(command.encode('utf-8'))
+            is_finished_thread.join()
+            self.ser.close()
+            return
+
+        def go_to(self, Wavelength):
+            self.flag_finished = True
+            self.response_received = False
+            if not self.ser.isOpen(): # Ensure the serial port is open
+                self.ser.open()
+
+            high, mid, low = self.wavelength_convert(Wavelength)
+            command_WL = bytes([high, mid, low])
+            command_prefix = chr(16)
+            is_send_thread = threading.Thread(target=self.is_send, args=(command_prefix,))  # chr(26) is the command to be sent
+            is_send_thread.start()
+            time.sleep(0.1)  
+            self.ser.write(command_prefix.encode('utf-8'))
+            is_send_thread.join()
+            self.ser.close()
+            
+            self.flag_finished = True
+            self.response_received = False
+            if not self.ser.isOpen():
+                self.ser.open()
+            is_finished_thread = threading.Thread(target=self.is_finished, args=(45,))  # chr(26) is the command to be sent
+            is_finished_thread.start()
+            time.sleep(0.1)
+            self.ser.write(command_WL)
+            is_finished_thread.join()
+            self.ser.close()
+            return
 
 if __name__ == '__main__':
-    inst_DK = Connect()
-    DK = DK480(inst_DK)
-    DK.PreCheck()
-    # DK.GratingSelect(3)
-    # DK.SlitAdjust(200)
-    DK.GoTo(3500)
-
+    DK480_control = DK480Control("COM4", 9600)
+    if DK480_control.connect():
+        device_op = DK480_control.DeviceOperation(DK480_control.ser)
+        device_op.grating_select(3)  # Example of selecting grating 1
+        device_op.go_to(4500)  # Example of moving to 500 nm wavelength
+        #! If I use the same value twice, the error happens: Error converting binary to Shift-JIS string: ord() expected a character, but string of length 2 found
+        device_op.slit_adjust(1000)  
+        device_op.precheck()
+        DK480_control.disconnect()
+        pass
 # %%
