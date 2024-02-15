@@ -8,18 +8,18 @@ Created on Thu Apr 28 14:00:25 2022
 #%%
 from PyQt5.QtWidgets import QButtonGroup,QFileDialog,QMainWindow,QApplication,QWidget
 from PyQt5.QtCore import QObject, QRunnable, pyqtSignal, Qt, QThreadPool, pyqtSlot
+import pyqtgraph.exporters # pg.exporters を呼ぶために必要
 from PyQt5 import uic
-import sys
-import DK480_control_refactor
-import numpy as np
-import pandas as pd
-import pyqtgraph as pg
-import uuid
-import datetime
-import os
 from pyqtgraph import Point
 from optics import *
-import pyqtgraph.exporters # pg.exporters を呼ぶために必要
+import pyqtgraph as pg
+import pandas as pd
+import numpy as np
+import DK480_control_refactor
+import datetime
+import uuid
+import sys
+import os
 
 class MainWindow(QMainWindow):
     def __init__(self):
