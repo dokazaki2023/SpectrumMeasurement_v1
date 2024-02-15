@@ -82,8 +82,6 @@ def wlPen(wl,WL_min,WL_max):
 
     Returns: A QPen object with the calculated color and a preset width.
     """
-    l1 = 4000
-    l2 = 5000
     l1 = WL_min+50
     l2 = WL_max-50
         
@@ -760,7 +758,6 @@ class Ray(pg.GraphicsObject, ParamObj):
         if parent is not None:
             defaults['start'] = parent['end']
             defaults['wl'] = parent['wl']
-            defaults['Laser'] = parent['Laser']
             self['ior'] = parent['ior']
             self['dir'] = parent['dir']
             self['WL_min'] = parent['WL_min']

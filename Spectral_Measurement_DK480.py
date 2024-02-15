@@ -22,6 +22,8 @@ import sys
 import os
 
 class MainWindow(QMainWindow):
+    SPEED_OF_LIGHT = 2.997924 * 10**8
+    
     def __init__(self):
         super().__init__()
         global times
@@ -36,7 +38,7 @@ class MainWindow(QMainWindow):
         self.dlg1 = uic.loadUi("DK480.ui")
         self.dlg2 = uic.loadUi("DK480_Raytrace.ui")
 
-        # self.setupDialogs()
+        self.setupDialogs()
         self.setupThreadPool()
         self.setupDefaultValues()
         self.setupConnections()
@@ -78,30 +80,43 @@ class MainWindow(QMainWindow):
         
     ## Toggle Button ##
     def setupConnections(self):
-        ## Combo ##
-        self.dlg1.ComboBox_DR.activated[str].connect(self.DynamicReserve)
-        self.dlg1.ComboBox_IntegrationTime.activated[str].connect(self.Integration)
-        self.dlg1.ComboBox_Sensitivity.activated[str].connect(self.Sensitivity)
-        ## Check Box ##
-        self.dlg1.CheckBox_LockIn.stateChanged.connect(lambda: self.LockIn(self.dlg1.CheckBox_LockIn.checkState()))
-        ## Push Button ##
-        self.dlg1.Button_Close.clicked.connect(self.close_application)
-        self.dlg2.Button_Close.clicked.connect(self.close_application2)
-        self.dlg1.Button_Folder.clicked.connect(self.folder_choose)
-        self.dlg1.Button_Change_Slit.clicked.connect(self.ChangeSlit)
-        self.dlg1.Button_Go.clicked.connect(self.Go)
-        self.dlg1.Button_Measure.clicked.connect(self.execute)
-        self.dlg1.Button_Update.clicked.connect(self.update)
-        self.dlg1.Button_Previous.clicked.connect(self.AddPlot)
-        self.dlg1.Button_Delete.clicked.connect(self.DeletePlot)
-        for i in range(1, 4):
-            getattr(self.dlg1, f'radioButton{i}').toggled.connect(lambda _, b=i: self.btnstate(getattr(self.dlg1, f'radioButton{b}')))
+        # Combo Boxes
+        combo_boxes = {
+            "ComboBox_DR": self.DynamicReserve,
+            "ComboBox_IntegrationTime": self.Integration,
+            "ComboBox_Sensitivity": self.Sensitivity,
+        }
+        for box_name, function in combo_boxes.items():
+            getattr(self.dlg1, box_name).activated[str].connect(function)
+
+        # Check Box
+        self.dlg1.CheckBox_LockIn.stateChanged.connect(
+            lambda state: self.LockIn(self.dlg1.CheckBox_LockIn.checkState()))
+
+        # Push Buttons
+        push_buttons = {
+            "Button_Close": self.close_application,
+            "Button_Folder": self.folder_choose,
+            "Button_Change_Slit": self.ChangeSlit,
+            "Button_Go": self.Go,
+            "Button_Measure": self.execute,
+            "Button_Update": self.update,
+            "Button_Previous": self.AddPlot,
+            "Button_Delete": self.DeletePlot,
+        }
+        for btn_name, function in push_buttons.items():
+            if hasattr(self.dlg1, btn_name):
+                getattr(self.dlg1, btn_name).clicked.connect(function)
+            elif hasattr(self.dlg2, btn_name):  # For dlg2 specific buttons
+                getattr(self.dlg2, btn_name).clicked.connect(function)
+
+        # Radio Buttons
         btngroup_Grating = QButtonGroup()
-        getattr(self.dlg1, f'radioButton{i}').toggled.connect(lambda _, b=i: self.btnstate(getattr(self.dlg1, f'radioButton{b}')))
-        btngroup_Grating.addButton(self.dlg1.radioButton1,1)
-        btngroup_Grating.addButton(self.dlg1.radioButton2,1)
-        btngroup_Grating.addButton(self.dlg1.radioButton3,1)
-        
+        for i in range(1, 4):
+            radio_button = getattr(self.dlg1, f'radioButton{i}')
+            btngroup_Grating.addButton(radio_button)
+            radio_button.toggled.connect(lambda checked, b=i: self.btnstate(radio_button) if checked else None)
+
     def setupGraphs(self):
         self.configurePlot(self.dlg1.graphicsView1.plotItem)
         self.configurePlot(self.dlg1.graphicsView2.plotItem)
@@ -118,55 +133,57 @@ class MainWindow(QMainWindow):
         plotItem.getAxis("bottom").tickFont = font_obj
         plotItem.setLogMode(False, logModeY)
         
+    def calculate_resolution(self, WL_Target, Slit, Groove):
+        try:
+            Resolution_Slit = WL_Target * Slit / 1e6
+            Resolution_Grating = WL_Target / (Groove * 60)
+            Resolution_WL = np.sqrt(Resolution_Slit**2 + Resolution_Grating**2)
+            Resolution_Frequency = (self.SPEED_OF_LIGHT * (Resolution_WL * 1e-9) / ((WL_Target * 1e-9)**2))
+            Resolution_WN = Resolution_Frequency / (self.SPEED_OF_LIGHT * 1e2)
+            return np.round(Resolution_WL, 3), np.round(Resolution_Frequency * 1e-9, 3), np.round(Resolution_WN, 3)
+        except Exception as e:
+            # Optionally log the error
+            print(f"Error calculating resolution: {e}")
+            return None, None, None
+    
     def update(self):
-        c = 2.997924*10**(8)
         # Update instance attributes from UI inputs
         self.Slit = float(self.dlg1.LineEdit_Entrance.text())
         self.WL_Target = float(self.dlg1.LineEdit_Target_WL.text())
         self.WL_Start = float(self.dlg1.LineEdit_Start_WL.text())
         self.WL_Stop = float(self.dlg1.LineEdit_Stop_WL.text())
         self.WL_step = float(self.dlg1.LineEdit_Step_WL.text())
-        try:
-            Resolution_Slit = self.WL_Target * self.Slit / 1e6
-            Resolution_Grating =  self.WL_Target /(self.Groove*60)
-            Resolution_WL = np.sqrt(Resolution_Slit**2 + Resolution_Grating**2)
-            Resolution_Frequency = (c*(Resolution_WL*1e-9)/((self.WL_Target*1e-9)**2))
-            Resolution_WN = Resolution_Frequency / (c*1e2)
-            Resolution_WL = np.round(Resolution_WL,3)
-            Resolution_Frequency = np.round(Resolution_Frequency*1e-9,3)
-            Resolution_WN = np.round(Resolution_WN,3)
-        except:
-            return
-        self.dlg1.LineEdit_Resolution_Wavelength.setText(str(Resolution_WL))
-        self.dlg1.LineEdit_Resolution_Wavenumber.setText(str(Resolution_WN))
-        self.dlg1.LineEdit_Resolution_Frequency.setText(str(Resolution_Frequency))
-        self.dlg1.textEdit.show()
-        
-        try:
-            # Perform calculations and update UI accordingly
-            self.dlg1.LineEdit_Target_WN.setText(str(self.calculate_wavenumber(self.WL_Target)))
-            self.dlg1.LineEdit_Start_WN.setText(str(self.calculate_wavenumber(self.WL_Start)))
-            self.dlg1.LineEdit_Stop_WN.setText(str(self.calculate_wavenumber(self.WL_Stop)))
-        except Exception as e:
-            # Handle potential errors, possibly log them or notify the user
-            print(f"Error updating wavelengths: {e}")
+        # Perform resolution calculation
+        Resolution_WL, Resolution_Frequency, Resolution_WN = self.calculate_resolution(self.WL_Target, self.Slit, self.Groove)
 
+        if Resolution_WL is not None:
+            self.dlg1.LineEdit_Resolution_Wavelength.setText(str(Resolution_WL))
+            self.dlg1.LineEdit_Resolution_Wavenumber.setText(str(Resolution_WN))
+            self.dlg1.LineEdit_Resolution_Frequency.setText(str(Resolution_Frequency))
+            self.dlg1.textEdit.show()
+
+        # Update UI with calculated wavenumbers
+        for attr_name, WL_value in [("LineEdit_Target_WN", self.WL_Target), ("LineEdit_Start_WN", self.WL_Start), ("LineEdit_Stop_WN", self.WL_Stop)]:
+            wavenumber = self.calculate_wavenumber(WL_value)
+            if wavenumber is not None:
+                getattr(self.dlg1, attr_name).setText(str(wavenumber))
+    
     def calculate_wavenumber(self, wavelength):
-        return np.round(1 / (wavelength * 1e-7), 2)
-        
+        try:
+            return np.round(1 / (wavelength * 1e-7), 2)
+        except Exception as e:
+            print(f"Error calculating wavenumber: {e}")
+            return None
+    
     def keyPressEvent(self, event): # エスケープキーを押すと画面が閉じる
         if event.key() == Qt.Key_Escape:
             self.close_application()
     
     def close_application(self):
-        # reply = QMessageBox.question(self, 'Confirmation',"Are you sure you want to quit?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        # if reply == QMessageBox.Yes:
         self.dlg1.textEdit.append(str(datetime.datetime.now()) + ' : The Application is closed')
         self.dlg1.close()  
         print('Turned off')
         self.close()  # Close the application window
-        # else:
-        #     pass
             
     def close_application2(self):
         self.dlg2.close()  
@@ -182,7 +199,6 @@ class MainWindow(QMainWindow):
     
     def btnstate(self,radioButton):
         DK.precheck()
-        
         if radioButton.isChecked():
             # Example action based on the specific radio button checked
             if radioButton == self.dlg1.radioButton1:
@@ -191,11 +207,10 @@ class MainWindow(QMainWindow):
                 self.performActionForRadioButton2()
             elif radioButton == self.dlg1.radioButton3:
                 self.performActionForRadioButton3()
-                
         DK.grating_select(self.GratingID)
+        
         if DK.flag_timeout:
-            redText = "<span style=\" color:#ff0000;\" >" + str(datetime.datetime.now()) + ' : Timeout occurs ! ' + "</span>"
-            self.dlg1.textEdit.append(redText)
+            self.timeout_notification()
         else:
             self.dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Grating is successfully changed to the Grating ' + str(self.GratingID)) # 文字を表示する
             self.dlg1.textEdit.show()
@@ -219,29 +234,33 @@ class MainWindow(QMainWindow):
         pass
 
     def ChangeSlit(self):
-        DK.precheck()
-        self.Slit = float(self.dlg1.LineEdit_Entrance.text())
-        DK.slit_adjust(self.Slit)
-        if DK.flag_timeout:
-            redText = "<span style=\" color:#ff0000;\" >" + str(datetime.datetime.now()) + ' : Timeout occurs ! ' + "</span>"
-            self.dlg1.textEdit.append(redText)
+        if float(self.dlg1.LineEdit_Entrance.text()) == self.Slit:
+            return
         else:
-            self.dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Entrance slit is set to ' + str(self.Slit) + ' um') # 文字を表示する
-            self.dlg1.textEdit.show()
-        
+            DK.precheck()
+            self.Slit = float(self.dlg1.LineEdit_Entrance.text())
+            DK.slit_adjust(self.Slit)
+            if DK.flag_timeout:
+                self.timeout_notification()
+            else:
+                self.dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Entrance slit is set to ' + str(self.Slit) + ' um') # 文字を表示する
+                self.dlg1.textEdit.show()
+            
     def Go(self):
         DK.precheck()
         self.WL_Target = float(self.dlg1.LineEdit_Target_WL.text())
         DK.go_to(self.WL_Target)
         if DK.flag_timeout:
-            redText = "<span style=\" color:#ff0000;\" >" + str(datetime.datetime.now()) + ' : Timeout occurs ! ' + "</span>"
-            self.dlg1.textEdit.append(redText)
+            self.timeout_notification()
         else:
             print('Center wavelength is set to ' + str(np.round(self.WL_Target,2)) + ' nm')
             self.dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Center wavelength is set to ' + str(np.round(self.WL_Target,2)) + ' nm') # 文字を表示する
             self.dlg1.textEdit.show()
             
-
+    def timeout_notification(self):
+        redText = "<span style=\" color:#ff0000;\" >" + str(datetime.datetime.now()) + ' : Timeout occurs ! ' + "</span>"
+        self.dlg1.textEdit.append(redText)
+        
 ########################################################
 ########################################################
     def LockIn(self,state):
@@ -252,85 +271,64 @@ class MainWindow(QMainWindow):
             self.dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Lock-In amplifier is connected') # 文字を表示する
             self.dlg1.textEdit.show() 
             print('Lock in measurement system is ready')
-        
-    def DynamicReserve(self,text): 
-        if text == 'LOW':
-            self.inst_LI.write("DRSV 2") # ダイナミックリザーブ 低 (noisy な時は高く)
-        if text == 'MIDDLE':
-            self.inst_LI.write("DRSV 1") 
-        if text == 'HIGH':
-            self.inst_LI.write("DRSV 0") 
-        print('Dynamic Reserve : ' + text +' is selected')
-        self.dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Dynamic Reserve : ' + text + ' is selected') # 文字を表示する
-        self.dlg1.textEdit.show()  
+    
+    def write_command_and_log(self, setting_type, text, command_map):
+        command = command_map.get(text)
+        if command:
+            self.inst_LI.write(command)
+            message = f"{datetime.datetime.now()} : {setting_type} : {text} is selected"
+            print(message)  # Console log for debugging or info
+            self.dlg1.textEdit.append(message)  # GUI log for user information
+            self.dlg1.textEdit.show()
+        else:
+            print(f"Unrecognized {setting_type.lower()} setting: {text}")
 
-    def Integration(self,text): 
-        if text == '1 ms':
-            self.inst_LI.write("TCON 4") # time constant
-        if text == '3 ms':
-            self.inst_LI.write("TCON 5")
-        if text == '10 ms':
-            self.inst_LI.write("TCON 6")
-        if text == '30 ms':
-            self.inst_LI.write("TCON 7")
-        if text == '100 ms':
-            self.inst_LI.write("TCON 8")
-        if text == '300 ms':
-            self.inst_LI.write("TCON 9")
-        if text == '1000 ms':
-            self.inst_LI.write("TCON 10")
-        print('Time constant : ' + text +' is selected')
-        self.dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Time constant : ' + text + ' is selected') # 文字を表示する
-        self.dlg1.textEdit.show()  
+    def DynamicReserve(self, text):
+        dynamic_reserve_map = {
+            'LOW': "DRSV 2",
+            'MIDDLE': "DRSV 1",
+            'HIGH': "DRSV 0",
+        }
+        self.write_command_and_log("Dynamic Reserve", text, dynamic_reserve_map)
 
-    def Sensitivity(self, text): 
-        if text == '1 V':
-            self.inst_LI.write("VSEN 26")
-        if text == '500 mV':
-            self.inst_LI.write("VSEN 25")
-        if text == '200 mV':
-            self.inst_LI.write("VSEN 24")
-        if text == '100 mV':
-            self.inst_LI.write("VSEN 23")
-        if text == '50 mV':
-            self.inst_LI.write("VSEN 22")
-        if text == '20 mV':
-            self.inst_LI.write("VSEN 21")
-        if text == '10 mV':
-            self.inst_LI.write("VSEN 20")
-        if text == '5 mV':
-            self.inst_LI.write("VSEN 19")
-        if text == '2 mV':
-            self.inst_LI.write("VSEN 18")
-        if text == '1 mV':
-            self.inst_LI.write("VSEN 17")
-        if text == '500 uV':
-            self.inst_LI.write("VSEN 16")
-        if text == '200 uV':
-            self.inst_LI.write("VSEN 15")
-        if text == '100 uV':
-            self.inst_LI.write("VSEN 14")
-        if text == '50 uV':
-            self.inst_LI.write("VSEN 13")
-        if text == '20 uV':
-            self.inst_LI.write("VSEN 12")
-        if text == '10 uV':
-            self.inst_LI.write("VSEN 11")
-        if text == '5 uV':
-            self.inst_LI.write("VSEN 10")
-        if text == '2 uV':
-            self.inst_LI.write("VSEN 9")
-        if text == '1 uV':
-            self.inst_LI.write("VSEN 8")
-        if text == '500 nV':
-            self.inst_LI.write("VSEN 7")
-        if text == '200 nV':
-            self.inst_LI.write("VSEN 6")
-        if text == '100 nV':
-            self.inst_LI.write("VSEN 5")
-        print('Sensitivity : ' + text +' is selected')
-        self.dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Sensitivity : ' + text + ' is selected') # 文字を表示する
-        self.dlg1.textEdit.show()       
+    def Integration(self, text):
+        integration_map = {
+            '1 ms': "TCON 4",
+            '3 ms': "TCON 5",
+            '10 ms': "TCON 6",
+            '30 ms': "TCON 7",
+            '100 ms': "TCON 8",
+            '300 ms': "TCON 9",
+            '1000 ms': "TCON 10",
+        }
+        self.write_command_and_log("Time constant", text, integration_map)
+
+    def Sensitivity(self, text):
+        sensitivity_map = {
+            '1 V': "VSEN 26",
+            '500 mV': "VSEN 25",
+            '200 mV': "VSEN 24",
+            '100 mV': "VSEN 23",
+            '50 mV': "VSEN 22",
+            '20 mV': "VSEN 21",
+            '10 mV': "VSEN 20",
+            '5 mV': "VSEN 19",
+            '2 mV': "VSEN 18",
+            '1 mV': "VSEN 17",
+            '500 uV': "VSEN 16",
+            '200 uV': "VSEN 15",
+            '100 uV': "VSEN 14",
+            '50 uV': "VSEN 13",
+            '20 uV': "VSEN 12",
+            '10 uV': "VSEN 11",
+            '5 uV': "VSEN 10",
+            '2 uV': "VSEN 9",
+            '1 uV': "VSEN 8",
+            '500 nV': "VSEN 7",
+            '200 nV': "VSEN 6",
+            '100 nV': "VSEN 5",
+        }
+        self.write_command_and_log("Sensitivity", text, sensitivity_map)
 
 ########################################################
 ########################################################
@@ -390,8 +388,30 @@ class Worker(QRunnable):
     @pyqtSlot()
     def run(self):
         global times
-        # Sampling_Number = float(dlg1.LineEdit_Sampling_Number.text())
-        # Sampling_Rate = int(1e3*float(dlg1.LineEdit_Sampling_Rate.text()))     
+        
+        def duplicate_rename(filename):
+            new_name = filename
+            global times
+            if os.path.exists(filename):
+                name, ext = os.path.splitext(filename)
+                while True:
+                    new_name = "{}{}({}){}".format(directory, '_Spectrum', times, ext)
+                    if not os.path.exists(new_name):
+                        return new_name
+                    times += 1
+                    window.dlg1.LineEdit_Data_Number.setText(str(times))
+            else:
+                return new_name
+        
+        def generate_and_rename_filenames(directory, base_name, times, extensions):
+            filenames = []
+            for ext in extensions:
+                filename = f"{directory}{base_name}({times}){ext}" # Generate the initial filename
+                filename = duplicate_rename(filename) # Rename the file if it already exists to ensure uniqueness
+                filenames.append(filename) # Append the possibly renamed filename to the list
+
+            return filenames
+        
         window.update()
         WL = window.WL_Start
         Wavelength = window.WL_Start
@@ -415,41 +435,20 @@ class Worker(QRunnable):
         saves = savedata.transpose()
         folder = str(window.dlg1.LineEdit_Folders.text())
         directory = folder + str(datetime.date.today())
-        
-        
-        def duplicate_rename(filename):
-            new_name = filename
-            global times
-            if os.path.exists(filename):
-                name, ext = os.path.splitext(filename)
-                while True:
-                    new_name = "{}{}({}){}".format(directory, '_Spectrum', times, ext)
-                    if not os.path.exists(new_name):
-                        return new_name
-                    times += 1
-                    window.dlg1.LineEdit_Data_Number.setText(str(times))
-            else:
-                return new_name
-        
-        filename0 = "{}{}({}){}".format(directory, '_Spectrum', times, '.csv')                      
-        filename0 = duplicate_rename(filename0)
-        filename1 = "{}{}({}){}".format(directory, '_Spectrum', times, '.png')
-        filename1 = duplicate_rename(filename1)        
-        filename2 = "{}{}({}){}".format(directory, '_Spectrum', times, '.txt')
-        filename2 = duplicate_rename(filename2)
-        
+        base_name = "_Spectrum"
+        extensions = ['.csv', '.png', '.txt']
+        filenames = generate_and_rename_filenames(directory, base_name, times, extensions)
+
         try:
-            np.savetxt(filename0, saves, fmt="%.10f",delimiter=",",header="dammy,wavelength,rawdata")# 保存する文字列。
+            np.savetxt(filenames[0], saves, fmt="%.10f",delimiter=",",header="dammy,wavelength,rawdata")# 保存する文字列。
             exporter = pg.exporters.ImageExporter(window.dlg1.graphicsView1.scene()) # exportersの直前に pg.QtGui.QApplication.processEvents() を呼ぶ！
             exporter.parameters()['width'] = 1000
-            exporter.export(filename1)
-            
+            exporter.export(filenames[1])
             window.dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Measurement No.'+str(int(window.dlg1.LineEdit_Data_Number.text()))+ ' is finished')
             times = int(window.dlg1.LineEdit_Data_Number.text()) + 1 # measurement number
             window.dlg1.LineEdit_Data_Number.setText(str(times))
-            
             text = str(window.dlg1.textEdit.toPlainText())
-            with open(filename2, 'w') as f:
+            with open(filenames[2], 'w') as f:
                 f.write(text)
             window.dlg1.textEdit.append(str(datetime.datetime.now()) + ' : The datas are saved successefully.') 
             print('ファイルは正常に保存されました。')
@@ -461,62 +460,42 @@ class Worker(QRunnable):
 
 class SubWindow(QMainWindow):
     def __init__(self):
-        global dlg2
         dlg2 = uic.loadUi("DK480_Raytrace.ui")
         dlg2.graphicsView3.clear()
-        p3 = dlg2.graphicsView3.plotItem
-        p3.setRange(xRange = (-500, 100), yRange = (-350, 250), padding = 0)
-        dlg2.show()  # ダイアログ1を表示
-        
-        optics = []
-        allRays1 = []
-        allRays2 = []
-        allRays3 = []
-        Groove = 300
-        WL_Target = 4100
-        WL_BW_nm = 600
-        Num_color = 11
-        WL_center_um = 1e-3*WL_Target
-        WL_Blue = 1e3*WL_center_um - WL_BW_nm/2
-        WL_Red =  1e3*WL_center_um + WL_BW_nm/2
-        
-        M1 = Mirror(r1=0, pos=(-2, -315), angle=-135, d1=25, d2=25, d=6, name = 'Coupling Mirror')
-        L1 = Lens(pos=(0, -225), angle=90, dia=25, r1=100/2, r2= 0, d= 4.0, glass='CaF2', name = 'Coupling Lens')
-        M2 = Mirror(r1=0, pos=(2, -85), angle=41.8, d1=25, d2=25, d=6, name = 'Second Mirror')
-        P1 = Mirror(r1=-480*2, pos=(-450, -40), angle=180, d1=60, d2=60, d=10, name = 'Collimating Mirror')
-        G1 = Grating(Groove=Groove, pos=(0,7), angle=-38.3, d1=68, d2=68, d=10, name = 'Grating')
-        P2 = Mirror(r1=-480*2, pos=(-450, 40), angle=180, d1=60, d2=60, d=10, name = 'Focusing Mirror')
-        M3 = Mirror(r1=0, pos=(0, 79), angle=-43.2, d1=25, d2=25, d=6, name = 'Output Mirror')
-        optics.append(M1)
-        optics.append(L1)
-        optics.append(M2)
-        optics.append(P1)
-        optics.append(G1)
-        optics.append(P2)
-        optics.append(M3)
-        
-        for wl in np.linspace(WL_Blue, WL_Red, Num_color):
-            r1 = Ray(start=Point(100, -312.5), dir=(-1,0), wl=wl, WL_min=WL_Blue, WL_max=WL_Red, Laser='Fe')
-            dlg2.graphicsView3.addItem(r1)
-            allRays1.append(r1)
-        
-        for wl in np.linspace(WL_Blue, WL_Red, Num_color):
-            r2 = Ray(start=Point(100, -309), dir=(-1,0), wl=wl, WL_min=WL_Blue, WL_max=WL_Red, Laser='Fe')
-            dlg2.graphicsView3.addItem(r2)
-            allRays2.append(r2)
-        
-        for wl in np.linspace(WL_Blue, WL_Red, Num_color):
-            r3 = Ray(start=Point(100, -316), dir=(-1,0), wl=wl, WL_min=WL_Blue, WL_max=WL_Red, Laser='Fe')
-            dlg2.graphicsView3.addItem(r3)
-            allRays3.append(r3)
-        
-        for o in optics:
-            dlg2.graphicsView3.addItem(o)  
-        tracer1 = Tracer(allRays1, optics)
-        tracer2 = Tracer(allRays2, optics)
-        tracer3 = Tracer(allRays3, optics)
-        pg.exec()
+        dlg2.graphicsView3.plotItem.setRange(xRange = (-500, 100), yRange = (-350, 250), padding = 0)
+        WL_Target, WL_BW_nm, Num_color = 4100, 600, 11
+        WL_center_um = 1e-3 * WL_Target
+        WL_Blue = 1e3 * WL_center_um - WL_BW_nm / 2
+        WL_Red = 1e3 * WL_center_um + WL_BW_nm / 2
+        start_positions = [-312.5, -309, -316]  # Different start positions for rays
 
+        optics = [
+                    Mirror(r1=0, pos=(-2, -315), angle=-135, d1=25, d2=25, d=6, name='Coupling Mirror'),
+                    Lens(pos=(0, -225), angle=90, dia=25, r1=100/2, r2=0, d=4.0, glass='CaF2', name='Coupling Lens'),
+                    Mirror(r1=0, pos=(2, -85), angle=41.8, d1=25, d2=25, d=6, name='Second Mirror'),
+                    Mirror(r1=-480*2, pos=(-450, -40), angle=180, d1=60, d2=60, d=10, name='Collimating Mirror'),
+                    Grating(Groove=300, pos=(0, 7), angle=-38.3, d1=68, d2=68, d=10, name='Grating'),
+                    Mirror(r1=-480*2, pos=(-450, 40), angle=180, d1=60, d2=60, d=10, name='Focusing Mirror'),
+                    Mirror(r1=0, pos=(0, 79), angle=-43.2, d1=25, d2=25, d=6, name='Output Mirror')
+                ]
+        for o in optics:
+            dlg2.graphicsView3.addItem(o) 
+        
+        all_rays = []
+        for start_y in start_positions:
+            rays = []
+            for wl in np.linspace(WL_Blue, WL_Red, Num_color):
+                ray = Ray(start=Point(100, start_y), dir=(-1, 0), wl=wl, WL_min=WL_Blue, WL_max=WL_Red)
+                dlg2.graphicsView3.addItem(ray)
+                rays.append(ray)
+            all_rays.append(rays)
+        
+        self.tracers = []  # Initialize an empty list to store Tracer instances
+        for rays in all_rays:
+            tracer = Tracer(rays, optics)
+            self.tracers.append(tracer)
+        dlg2.show()
+        pg.exec()
 ########################################################
 ########################################################        
 if __name__ == "__main__":
@@ -527,7 +506,7 @@ if __name__ == "__main__":
         pass
     app = QApplication(sys.argv)
     window = MainWindow()
-    # subWindow = SubWindow()
+    subWindow = SubWindow()
     app.exec_()
 
 # %%
