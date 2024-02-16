@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
         self.WL_Target = 0
         self.WL_Start = 0
         self.WL_Stop = 0
-        self.GratingID = 2
+        self.GratingID = 3
         self.Groove = 300
         
         self.Slit = 100
@@ -219,10 +219,8 @@ class MainWindow(QMainWindow):
                 self.GratingID = 3
                 self.Groove = 300
                 print (self.dlg1.radioButton3.text()+" is selected")
-            
         DK.grating_select(self.GratingID)
-        print(self.GratingID)
-        
+
         if DK.flag_timeout:
             self.timeout_notification()
         else:
@@ -231,22 +229,19 @@ class MainWindow(QMainWindow):
 
 
     def ChangeSlit(self):
-        if float(self.dlg1.LineEdit_Entrance.text()) == self.Slit:
-            return
+        DK.precheck()
+        self.Slit = float(self.dlg1.LineEdit_Entrance.text())
+        DK.slit_adjust(self.Slit)
+        if DK.flag_timeout:
+            self.timeout_notification()
         else:
-            DK.precheck()
-            self.Slit = float(self.dlg1.LineEdit_Entrance.text())
-            DK.slit_adjust(self.Slit)
-            if DK.flag_timeout:
-                self.timeout_notification()
-            else:
-                self.dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Entrance slit is set to ' + str(self.Slit) + ' um') # 文字を表示する
-                self.dlg1.textEdit.show()
-            
+            self.dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Entrance slit is set to ' + str(self.Slit) + ' um') # 文字を表示する
+            self.dlg1.textEdit.show()
+
     def Go(self):
         DK.precheck()
         self.WL_Target = float(self.dlg1.LineEdit_Target_WL.text())
-        DK.go_to(self.WL_Target)
+        DK.go_to(self.WL_Target, timeout=50)
         if DK.flag_timeout:
             self.timeout_notification()
         else:
@@ -441,13 +436,12 @@ class Worker(QRunnable):
             exporter = pg.exporters.ImageExporter(window.dlg1.graphicsView1.scene()) # exportersの直前に pg.QtGui.QApplication.processEvents() を呼ぶ！
             exporter.parameters()['width'] = 1000
             exporter.export(filenames[1])
-            window.dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Measurement No.'+str(int(window.dlg1.LineEdit_Data_Number.text()))+ ' is finished')
+            window.dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Measurement No.'+str(int(window.dlg1.LineEdit_Data_Number.text()))+ ' is saved successefully')
             times = int(window.dlg1.LineEdit_Data_Number.text()) + 1 # measurement number
             window.dlg1.LineEdit_Data_Number.setText(str(times))
             text = str(window.dlg1.textEdit.toPlainText())
             with open(filenames[2], 'w') as f:
                 f.write(text)
-            window.dlg1.textEdit.append(str(datetime.datetime.now()) + ' : The datas are saved successefully.') 
             print('ファイルは正常に保存されました。')
         except:
             print('ファイルの保存に失敗しました。')

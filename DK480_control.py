@@ -219,7 +219,7 @@ class DK480Control:
             self.ser.close()
             return
 
-        def go_to(self, Wavelength):
+        def go_to(self, Wavelength, timeout=5):
             self.flag_finished = True
             self.response_received = False
             if not self.ser.isOpen(): # Ensure the serial port is open
@@ -239,7 +239,7 @@ class DK480Control:
             self.response_received = False
             if not self.ser.isOpen():
                 self.ser.open()
-            is_finished_thread = threading.Thread(target=self.is_finished, args=(45,))  # chr(26) is the command to be sent
+            is_finished_thread = threading.Thread(target=self.is_finished, args=(timeout,))  # chr(26) is the command to be sent
             is_finished_thread.start()
             time.sleep(0.1)
             self.ser.write(command_WL)
