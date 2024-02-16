@@ -32,8 +32,9 @@ class MainWindow(QMainWindow):
         self.WL_Target = 0
         self.WL_Start = 0
         self.WL_Stop = 0
-        self.Grating_ID = 3
+        self.GratingID = 2
         self.Groove = 300
+        
         self.Slit = 100
         self.dlg1 = uic.loadUi("DK480.ui")
         self.dlg2 = uic.loadUi("DK480_Raytrace.ui")
@@ -197,41 +198,32 @@ class MainWindow(QMainWindow):
         self.dlg1.textEdit.append('Path: ' + file_path) # 文字を表示する
         self.dlg1.LineEdit_Folders.setText(str(file_path))
     
-    def btnstate(self,radioButton):
+    def btnstate(self,radio_button):
         DK.precheck()
-        if radioButton.isChecked():
+        if radio_button.isChecked():
             # Example action based on the specific radio button checked
-            if radioButton == self.dlg1.radioButton1:
-                self.performActionForRadioButton1()
-            elif radioButton == self.dlg1.radioButton2:
-                self.performActionForRadioButton2()
-            elif radioButton == self.dlg1.radioButton3:
-                self.performActionForRadioButton3()
+            if radio_button == self.dlg1.radioButton1:
+                self.GratingID = 1
+                self.Groove = 1200
+                print (self.dlg1.radioButton1.text()+" is selected")
+            elif radio_button == self.dlg1.radioButton2:
+                self.GratingID = 2
+                self.Groove = 600
+                print (self.dlg1.radioButton2.text()+" is selected")
+            elif radio_button == self.dlg1.radioButton3:
+                self.GratingID = 3
+                self.Groove = 300
+                print (self.dlg1.radioButton3.text()+" is selected")
+            else:
         DK.grating_select(self.GratingID)
+        print(self.GratingID)
         
         if DK.flag_timeout:
             self.timeout_notification()
         else:
             self.dlg1.textEdit.append(str(datetime.datetime.now()) + ' : Grating is successfully changed to the Grating ' + str(self.GratingID)) # 文字を表示する
             self.dlg1.textEdit.show()
-                
-    def performActionForRadioButton1(self):
-        self.GratingID = 1
-        self.Groove = 1200
-        print (self.dlg1.radioButton1.text()+" is selected")
-        pass
 
-    def performActionForRadioButton2(self):
-        self.GratingID = 2
-        self.Groove = 600
-        print (self.dlg1.radioButton1.text()+" is selected")
-        pass
-
-    def performActionForRadioButton3(self):
-        self.GratingID = 3
-        self.Groove = 300
-        print (self.dlg1.radioButton1.text()+" is selected")
-        pass
 
     def ChangeSlit(self):
         if float(self.dlg1.LineEdit_Entrance.text()) == self.Slit:
@@ -506,7 +498,7 @@ if __name__ == "__main__":
         pass
     app = QApplication(sys.argv)
     window = MainWindow()
-    subWindow = SubWindow()
+    # subWindow = SubWindow()
     app.exec_()
 
 # %%
