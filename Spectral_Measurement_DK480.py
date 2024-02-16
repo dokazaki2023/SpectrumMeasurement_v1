@@ -11,6 +11,7 @@ from PyQt5.QtCore import QObject, QRunnable, pyqtSignal, Qt, QThreadPool, pyqtSl
 import pyqtgraph.exporters # pg.exporters を呼ぶために必要
 from PyQt5 import uic
 from pyqtgraph import Point
+from functools import partial
 from optics import *
 import pyqtgraph as pg
 import pandas as pd
@@ -116,7 +117,8 @@ class MainWindow(QMainWindow):
         for i in range(1, 4):
             radio_button = getattr(self.dlg1, f'radioButton{i}')
             btngroup_Grating.addButton(radio_button)
-            radio_button.toggled.connect(lambda checked, b=i: self.btnstate(radio_button) if checked else None)
+            # radio_button.toggled.connect(lambda checked, b=i: self.btnstate(radio_button) if checked else None)
+            radio_button.toggled.connect(partial(self.btnstate, radio_button))
 
     def setupGraphs(self):
         self.configurePlot(self.dlg1.graphicsView1.plotItem)
@@ -198,7 +200,10 @@ class MainWindow(QMainWindow):
         self.dlg1.textEdit.append('Path: ' + file_path) # 文字を表示する
         self.dlg1.LineEdit_Folders.setText(str(file_path))
     
-    def btnstate(self,radio_button):
+    def btnstate(self,radio_button, checked):
+        if not checked:
+            return  # Ignore signal if button is being unchecke
+        
         DK.precheck()
         if radio_button.isChecked():
             # Example action based on the specific radio button checked
@@ -214,7 +219,7 @@ class MainWindow(QMainWindow):
                 self.GratingID = 3
                 self.Groove = 300
                 print (self.dlg1.radioButton3.text()+" is selected")
-            else:
+            
         DK.grating_select(self.GratingID)
         print(self.GratingID)
         
