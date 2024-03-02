@@ -14,7 +14,7 @@ REFRESH_SERIAL_READ = 1e-4
 WAIT_TIME = 1e-1
 
 class DK480Control:
-    def __init__(self, port="COM4", baudrate=9600):
+    def __init__(self, port, baudrate=9600):
         self.ser = serial.Serial()
         self.ser.baudrate = baudrate
         self.ser.port = port
@@ -33,7 +33,7 @@ class DK480Control:
 
     def connect(self):
         try:
-            self.ser = serial.Serial("COM4",  baudrate=9600, bytesize=8, parity='N', stopbits=1, timeout=self.ser.timeout)
+            self.ser = serial.Serial(self.ser.port,  baudrate=9600, bytesize=8, parity='N', stopbits=1, timeout=self.ser.timeout)
             print(f"Device {self.ser.port} connected successfully.")
         except serial.SerialException as e:
             print("エラー：ポートが開けませんでした。", e)
