@@ -22,6 +22,9 @@ def connect(resource_name):
         # inst.write("*RST")
         # time.sleep(3)
         time.sleep(0.1)
+        inst.write("chdr off")
+        inst.timeout = 2000 #default value is 2000(2s)
+        inst.chunk_size = 20*1024 #default value is 20*1024(20k bytes)
         print(f'{inst.query("*IDN?")}に接続しました')
         return inst
     except Exception as e:
@@ -80,9 +83,14 @@ class Oscilloscope:
         sara_float = np.float32(sara)
         return vdiv_float, ofst_float, tdiv_float, sara_float
 
+    def query_param_math(self):
+        # self.inst.write("def eqn,'c1*c2'")
+        vdiv = self.inst.query("mtvd?") ##
+        vdiv_float = np.float32(vdiv)
+        ofst_float = vdiv_float*5
+        return vdiv_float, ofst_float
+
     def get_c1(self, vdiv_float, ofst_float):
-        self.inst.timeout = 30000 #default value is 2000(2s)
-        self.inst.chunk_size = 20*1024*1024 #default value is 20*1024(20k bytes)
         self.inst.write("c1:wf? dat2")
         recv = np.array(list(self.inst.read_raw())[15:-2])  # This slices off the last two elements directly
         volt_value = np.where(recv > 127, recv - 255, recv)
@@ -90,13 +98,7 @@ class Oscilloscope:
         volt_value = volt_value / 25 * vdiv_float - ofst_float
         return volt_value
     
-    def get_math(self):
-        # self.inst.write("def eqn,'c1*c2'")
-        vdiv = self.inst.query("mtvd?") ##
-        vdiv_float = np.float32(vdiv)
-        ofst_float = vdiv_float*5
-        self.inst.timeout = 30000 #default value is 2000(2s)
-        self.inst.chunk_size = 20*1024*1024 #default value is 20*1024(20k bytes)
+    def get_math(self ,vdiv_float, ofst_float):
         self.inst.write("math:wf? dat2")
         recv = np.array(list(self.inst.read_raw())[15:-2])  # This slices off the last two elements directly
         volt_value = np.where(recv > 127, recv - 0, recv)
