@@ -91,15 +91,16 @@ class Oscilloscope:
         return volt_value
     
     def get_math(self):
-        self.inst.write("def eqn,'c1*c2'")
+        # self.inst.write("def eqn,'c1*c2'")
         vdiv = self.inst.query("mtvd?") ##
         vdiv_float = np.float32(vdiv)
+        ofst_float = vdiv_float*5
         self.inst.timeout = 30000 #default value is 2000(2s)
         self.inst.chunk_size = 20*1024*1024 #default value is 20*1024(20k bytes)
         self.inst.write("math:wf? dat2")
         recv = np.array(list(self.inst.read_raw())[15:-2])  # This slices off the last two elements directly
-        volt_value = np.where(recv > 127, recv - 255, recv)
+        volt_value = np.where(recv > 127, recv - 0, recv)
         volt_value = np.array(volt_value)
-        volt_value = volt_value / 25 * vdiv_float
+        volt_value = volt_value * vdiv_float / 25 - ofst_float
         return volt_value
     

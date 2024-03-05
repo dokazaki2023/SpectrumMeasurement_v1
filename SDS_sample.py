@@ -5,7 +5,7 @@ import numpy as np
 
 def main():
     _rm = pyvisa.ResourceManager()
-    sds = _rm.open_resource("USB0::0xF4EC::0x1010::SDS2EDDD7R1135::INSTR")
+    sds = _rm.open_resource("USB0::0xF4EC::0x1010::SDS2EBAD3R0417::INSTR")
     sds.write("chdr off")
     vdiv = sds.write("c1:vdiv 10mV")
     print(f'{sds.query("c1:vdiv?")}')
