@@ -62,14 +62,18 @@ class CM110Control:
             
         def binary_to_string_UTF(self, binary_data):
             try:
-                return ord(binary_data.strip().decode('utf-8'))
+                data = binary_data.strip().decode('shift-jis')
+                int_values = [ord(c) for c in data]
+                return int_values
             except Exception as e:
                 print(f"Error converting binary to UTF-8 string: {e}")
                 return None
 
         def binary_to_string_ShiftJis(self, binary_data):
             try:
-                return ord(binary_data.strip().decode('shift-jis'))
+                data = binary_data.strip().decode('shift-jis')
+                int_values = [ord(c) for c in data]
+                return int_values
             except Exception as e:
                 print(f"Error converting binary to Shift-JIS string: {e}")
                 return None
@@ -102,20 +106,35 @@ class CM110Control:
                 print(result)
                 if result:
                     result_int = self.binary_to_string_UTF(result)
-                    if 24 == result_int:  # Assuming 24 is the expected response code
+                    if 24 in result_int:  # Assuming 24 is the expected response code
                         self.response_received = True
                         self.flag_finished = False
                         # print('IsFinished OK')
 
-        #! Need to change for CM110.
         @staticmethod
         def wavelength_convert(wavelength):
-            # Convert wavelength to an integer and then to a hexadecimal string, removing the '0x' prefix.
-            wavelength_int = int(wavelength * 100)
-            hex_str = format(wavelength_int, '06x')  # Ensure the hex string is padded to 6 characters.
-            # Extract high, mid, and low bytes from the hex string.
-            high, mid, low = (int(hex_str[i:i+2], 16) for i in range(0, 6, 2))
+            hex_value = format(wavelength, 'x').upper()
+            hex_value_padded = hex_value.zfill(4)
+            
+            hi_byte_hex, lo_byte_hex = hex_value_padded[:2], hex_value_padded[2:]
+            high = int(hi_byte_hex, 16)
+            low = int(lo_byte_hex, 16)
             return high, low
+        
+        def unit(self):
+            self.flag_finished = True
+            self.response_received = False
+            if not self.ser.isOpen():
+                self.ser.open()
+            command_prefix = chr(50)
+            command = chr(1) #'nanometer'
+            command_send = command_prefix + command
+            is_finished_thread = threading.Thread(target=self.is_finished, args=(15,))
+            is_finished_thread.start()
+            time.sleep(0.1)
+            self.ser.write(command_send.encode('utf-8') )
+            is_finished_thread.join()
+            self.ser.close()
 
         def grating_select(self, GratingID,):        #? To DK240/480: <26> GRTSEL
             self.flag_finished = True
@@ -125,12 +144,12 @@ class CM110Control:
             command_prefix = chr(26)
             command = chr(GratingID)
             command_send = command_prefix + command
-
-            is_finished_thread = threading.Thread(target=self.is_finished, args=(12.5,))
+            is_finished_thread = threading.Thread(target=self.is_finished, args=(15,))
             is_finished_thread.start()
             time.sleep(0.1)
             self.ser.write(command_send.encode('utf-8'))
             is_finished_thread.join()
+            self.unit()
             self.ser.close()
             return
 
@@ -142,9 +161,10 @@ class CM110Control:
                 self.ser.open()
 
             command_prefix = chr(16)
+            command_prefix = command_prefix.encode('utf-8')
             high, low = self.wavelength_convert(Wavelength)
             command_WL = bytes([high, low])
-            command_send = command_prefix.encode('utf-8') + command_WL
+            command_send = command_prefix + command_WL
 
             is_finished_thread = threading.Thread(target=self.is_finished, args=(timeout,))  # chr(26) is the command to be sent
             is_finished_thread.start()
@@ -155,11 +175,11 @@ class CM110Control:
             return
 
 if __name__ == '__main__':
-    CM110_control = CM110Control("COM5", 9600)
+    CM110_control = CM110Control("COM8", 9600)
     if CM110_control.connect():
         device_op = CM110_control.DeviceOperation(CM110_control.ser)
         device_op.grating_select(1)  # Example of selecting grating 1
-        # device_op.go_to(4500)  # Example of moving to 500 nm wavelength
+        device_op.go_to(9000)  # Example of moving to 500 nm wavelength
         CM110_control.disconnect()
         pass
 # %%

@@ -62,14 +62,18 @@ class DK480Control:
             
         def binary_to_string_UTF(self, binary_data):
             try:
-                return ord(binary_data.strip().decode('utf-8'))
+                data = binary_data.strip().decode('shift-jis')
+                int_values = [ord(c) for c in data]
+                return int_values
             except Exception as e:
                 print(f"Error converting binary to UTF-8 string: {e}")
                 return None
 
         def binary_to_string_ShiftJis(self, binary_data):
             try:
-                return ord(binary_data.strip().decode('shift-jis'))
+                data = binary_data.strip().decode('shift-jis')
+                int_values = [ord(c) for c in data]
+                return int_values
             except Exception as e:
                 print(f"Error converting binary to Shift-JIS string: {e}")
                 return None

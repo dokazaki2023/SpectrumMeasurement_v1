@@ -105,7 +105,7 @@
        </font>
       </property>
       <property name="text">
-       <string>600 L/mm, 1200 nm, 800-3000 nm</string>
+       <string>150 L/mm, 4000 nm, 2500-9000 nm</string>
       </property>
      </widget>
     </item>
@@ -118,7 +118,7 @@
        </font>
       </property>
       <property name="text">
-       <string>150 L/mm, 4000 nm, 2500-9000 nm</string>
+       <string>600 L/mm, 1200 nm, 800-3000 nm</string>
       </property>
      </widget>
     </item>
