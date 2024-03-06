@@ -76,7 +76,6 @@ class MainWindow(QMainWindow):
             "LineEdit_Step_WL": '5',
             "LineEdit_Sampling_Rate": 'Not Ready',
             "LineEdit_Sampling_Number": 'Not Ready',
-            "LineEdit_Ch1": '500',
         }
         for line_edit, value in defaults.items():
             getattr(self.dlg1, line_edit).setText(value)
@@ -212,7 +211,6 @@ class MainWindow(QMainWindow):
         if command:
             inst_SDS.write(command)
             message = f"{datetime.datetime.now()} : {setting_type} : {text} is selected"
-            print(message)  # Console log for debugging or info
             self.dlg1.textEdit.append(message)  # GUI log for user information
             self.dlg1.textEdit.show()
         else:
@@ -220,24 +218,24 @@ class MainWindow(QMainWindow):
 
     def repetition(self, text):
         repetition_map = {
-            '10 Hz': "tdiv 0.05",
-            '100 Hz': "tdiv 0.5"
+            '10 Hz': "tdiv 0.2",
+            '100 Hz': "tdiv 0.02"
         }
         self.write_command_and_log("Repetition Rate", text, repetition_map)
 
     def math_range(self, text):
         math_range_map = {
-            '10 mV^2': "mtvd 50000mV",
-            '20 mV^2': "mtvd 50000mV",
-            '50 mV^2': "mtvd 50000mV",
-            '100 mV^2': "mtvd 50000mV",
-            '200 mV^2': "mtvd 50000mV",
-            '500 mV^2': "mtvd 50000mV",
-            '1 V^2': "mtvd 50000mV",
-            '2 V^2': "mtvd 50000mV",
-            '5 V^2': "mtvd 50000mV",
-            '10 V^2': "mtvd 50000mV",
-            '20 V^2': "mtvd 50000mV",
+            '10 mV^2': "mtvd 10mV",
+            '20 mV^2': "mtvd 20mV",
+            '50 mV^2': "mtvd 50mV",
+            '100 mV^2': "mtvd 100mV",
+            '200 mV^2': "mtvd 200mV",
+            '500 mV^2': "mtvd 500mV",
+            '1 V^2': "mtvd 1000mV",
+            '2 V^2': "mtvd 2000mV",
+            '5 V^2': "mtvd 5000mV",
+            '10 V^2': "mtvd 10000mV",
+            '20 V^2': "mtvd 20000mV",
             '50 V^2': "mtvd 50000mV"
         }
         self.write_command_and_log("Math Range", text, math_range_map)
@@ -370,20 +368,4 @@ if __name__ == '__main__':
     window = MainWindow()
     app.exec_()
     
-    # time.sleep(1)
-    # SDS.set_vdiv('c1', 500)
-    # SDS.set_ofset('c1', 0)
-    # SDS.set_vdiv('c2', 2000)
-    # SDS.set_ofset('c2', 0)
-    # SDS.set_tdiv(0.002)
-    # SDS.set_datasize(7)
-    # vdiv_float, ofst_float, tdiv_float, sara_float = SDS.query_param()
-    # vdiv = inst_SDS.write("mtvd 2000mV")
-    
-    # data = SDS.get_c1(vdiv_float, ofst_float)
-    # plt.figure(1, figsize=(12,6))
-    # plt.plot(data, '.')
-    # data = SDS.get_math()
-    # plt.figure(2, figsize=(12,6))
-    # plt.plot(data, '.')
 # %%

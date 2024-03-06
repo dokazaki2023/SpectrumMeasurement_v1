@@ -103,7 +103,6 @@ class CM110Control:
                     break
 
                 result = self.ser.readline()
-                print(result)
                 if result:
                     result_int = self.binary_to_string_UTF(result)
                     if 24 in result_int:  # Assuming 24 is the expected response code
@@ -113,6 +112,7 @@ class CM110Control:
 
         @staticmethod
         def wavelength_convert(wavelength):
+            wavelength = int(wavelength)
             hex_value = format(wavelength, 'x').upper()
             hex_value_padded = hex_value.zfill(4)
             
@@ -120,6 +120,13 @@ class CM110Control:
             high = int(hi_byte_hex, 16)
             low = int(lo_byte_hex, 16)
             return high, low
+        
+        def precheck(self):
+            #? To DK240/480: <27> ECHO # Ensure the serial port is open
+            self.flag_finished = True
+            self.response_received = False
+            if not self.ser.isOpen():
+                self.ser.open()
         
         def unit(self):
             self.flag_finished = True

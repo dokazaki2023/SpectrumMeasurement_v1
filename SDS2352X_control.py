@@ -40,7 +40,7 @@ class Oscilloscope:
         
     def set_parameter(self, command, value):
         self.inst.write(f"{command} {value}")
-        print(f"{command} {value}")
+        # print(f"{command} {value}")
 
     def set_vdiv(self, channel, volt_mV):
         command = f'{channel}:vdiv'
@@ -84,7 +84,7 @@ class Oscilloscope:
         return vdiv_float, ofst_float, tdiv_float, sara_float
 
     def query_param_math(self):
-        # self.inst.write("def eqn,'c1*c2'")
+        self.inst.write("def eqn,'c1*c2'")
         vdiv = self.inst.query("mtvd?") ##
         vdiv_float = np.float32(vdiv)
         ofst_float = vdiv_float*5
