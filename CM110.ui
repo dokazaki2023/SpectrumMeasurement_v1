@@ -552,7 +552,7 @@
     <string>Folder</string>
    </property>
   </widget>
-  <widget class="QLabel" name="Label_DR">
+  <widget class="QLabel" name="Label_Repetition">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -572,7 +572,7 @@
     <string>Repetition</string>
    </property>
   </widget>
-  <widget class="QLabel" name="Label_Integration">
+  <widget class="QLabel" name="Label_Math_Range">
    <property name="geometry">
     <rect>
      <x>120</x>
@@ -592,7 +592,7 @@
     <string>Math Range</string>
    </property>
   </widget>
-  <widget class="QLabel" name="Label_DR_4">
+  <widget class="QLabel" name="Label_Ch1">
    <property name="geometry">
     <rect>
      <x>230</x>
@@ -612,7 +612,7 @@
     <string>Ch1 range (mV)</string>
    </property>
   </widget>
-  <widget class="QComboBox" name="ComboBox_IntegrationTime">
+  <widget class="QComboBox" name="ComboBox_Math_Range">
    <property name="geometry">
     <rect>
      <x>120</x>
@@ -689,7 +689,7 @@
     </property>
    </item>
   </widget>
-  <widget class="QComboBox" name="ComboBox_DR">
+  <widget class="QComboBox" name="ComboBox_Repetition">
    <property name="geometry">
     <rect>
      <x>20</x>

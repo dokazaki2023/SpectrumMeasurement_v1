@@ -8,7 +8,7 @@ Created on Tue Apr 5 14:00:25 2024
 from PyQt5.QtWidgets import QButtonGroup, QFileDialog, QMainWindow, QApplication, QMessageBox
 from PyQt5.QtCore import QObject, QRunnable, pyqtSignal, Qt, QThreadPool, pyqtSlot
 import pyqtgraph.exporters # pg.exporters を呼ぶために必要
-import DK480_control, SDS2352X_control
+import CM110_control, SDS2352X_control
 import matplotlib.pyplot as plt
 from PyQt5 import uic
 from pyqtgraph import Point
@@ -67,7 +67,6 @@ class MainWindow(QMainWindow):
         defaults = {
             "LineEdit_Folders": "C:\\Users\\okazaki\\Desktop\\実験データ\\",
             "LineEdit_Data_Number": '0',
-            "LineEdit_Entrance": '100',
             "LineEdit_Target_WL": '3400',
             "LineEdit_Start_WL": '3800',
             "LineEdit_Stop_WL": '4000',
@@ -358,14 +357,12 @@ class Worker(QRunnable):
 
 
 if __name__ == '__main__':
-    CM110_control = DK480_control.DK480Control(port="COM6", baudrate=9600)
+    CM110_control = CM110_control.CM110Control(port="COM5", baudrate=9600)
     if CM110_control.connect():
-        CM = DK480_control.DeviceOperation(DK480_control.ser)
-        DK480_control.disconnect()
-        pass
+        CM = CM110_control.DeviceOperation(CM110_control.ser)
+        CM110_control.disconnect()
     
-    if SDS2352X_control.connect('USB0::0xF4EC::0x1010::SDS2EBAD3R0417::INSTR'):
-        inst_SDS = SDS2352X_control.connect('USB0::0xF4EC::0x1010::SDS2EBAD3R0417::INSTR')
+        inst_SDS = SDS2352X_control.connect('USB0::0xF4EC::0x1010::SDS2EDDD7R1135::INSTR')
         SDS = SDS2352X_control.Oscilloscope(inst_SDS)
         pass
     
