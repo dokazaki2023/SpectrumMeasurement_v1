@@ -105,7 +105,7 @@ class DK480Control:
                 if result:
                     result_int = self.binary_to_string_UTF(result)
                     command_int = ord(command)
-                    if command_int == result_int:
+                    if command_int in result_int:
                         self.response_received = True
                         self.flag_finished = False
 
@@ -122,7 +122,7 @@ class DK480Control:
                 result = self.ser.readline()
                 if result:
                     result_int = self.binary_to_string_ShiftJis(result)
-                    if 24 == result_int:  # Assuming 24 is the expected response code
+                    if 24 in result_int:  # Assuming 24 is the expected response code
                         self.response_received = True
                         self.flag_finished = False
                         # print('IsFinished OK')
@@ -251,15 +251,15 @@ class DK480Control:
             self.ser.close()
             return
 
-if __name__ == '__main__':
-    DK480_control = DK480Control("COM4", 9600)
-    if DK480_control.connect():
-        device_op = DK480_control.DeviceOperation(DK480_control.ser)
-        device_op.grating_select(3)  # Example of selecting grating 1
-        device_op.go_to(4500)  # Example of moving to 500 nm wavelength
-        #! If I use the same value twice, the error happens: Error converting binary to Shift-JIS string: ord() expected a character, but string of length 2 found
-        device_op.slit_adjust(1000)  
-        device_op.precheck()
-        DK480_control.disconnect()
-        pass
+# if __name__ == '__main__':
+#     DK480_control = DK480Control("COM4", 9600)
+#     if DK480_control.connect():
+#         device_op = DK480_control.DeviceOperation(DK480_control.ser)
+#         device_op.grating_select(3)  # Example of selecting grating 1
+#         device_op.go_to(4500)  # Example of moving to 500 nm wavelength
+#         #! If I use the same value twice, the error happens: Error converting binary to Shift-JIS string: ord() expected a character, but string of length 2 found
+#         device_op.slit_adjust(1000)  
+#         device_op.precheck()
+#         DK480_control.disconnect()
+#         pass
 # %%

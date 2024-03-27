@@ -493,7 +493,7 @@ if __name__ == "__main__":
     DK480_control = DK480_control.DK480Control("COM4", 9600)
     if DK480_control.connect():
         DK = DK480_control.DeviceOperation(DK480_control.ser)
-        DK480_control.disconnect()
+        # DK480_control.disconnect()
         pass
     app = QApplication(sys.argv)
     window = MainWindow()
